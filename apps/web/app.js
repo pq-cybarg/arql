@@ -75,17 +75,94 @@ async function loadConfig() {
   return r.json();
 }
 
+let cfg = {};
+let qrlProvider = null;
+let qrlAccount = "";
+let staticMode = false;
+
 function setStaticMode(on) {
+  staticMode = on;
   document.body.classList.toggle("static-pages", on);
   const badge = $("live-badge");
   if (on && badge && !badge.dataset.tx) badge.textContent = "github pages";
-  for (const form of document.querySelectorAll("form[data-action]")) {
+  for (const form of document.querySelectorAll("form[data-operator]")) {
     const btn = form.querySelector("button[type=submit]");
     if (btn) btn.disabled = on;
   }
 }
 
+function pad64(hex) {
+  return hex.replace(/^0x/i, "").replace(/^Q/i, "").toLowerCase().padStart(64, "0");
+}
+
+function units(amount, decimals = 6) {
+  const [w, f = ""] = String(amount).trim().split(".");
+  const frac = (f + "0".repeat(decimals)).slice(0, decimals);
+  return BigInt(w || "0") * 10n ** BigInt(decimals) + BigInt(frac || "0");
+}
+
+function calldata(sel, ...words) {
+  return sel + words.map((w) => pad64(typeof w === "bigint" ? w.toString(16) : String(w))).join("");
+}
+
+function discoverQrlProvider() {
+  return new Promise((resolve) => {
+    const found = [];
+    const on = (ev) => {
+      const d = ev.detail || {};
+      if (d.provider) found.push(d);
+    };
+    window.addEventListener("eip6963:announceProvider", on);
+    window.dispatchEvent(new Event("eip6963:requestProvider"));
+    setTimeout(() => {
+      window.removeEventListener("eip6963:announceProvider", on);
+      const qrl = found.find((x) => {
+        const n = `${x.info?.rdns || ""} ${x.info?.name || ""}`.toLowerCase();
+        return n.includes("qrl") || n.includes("zond") || x.provider?.isQrlWallet;
+      });
+      resolve(qrl?.provider || window.qrl || (window.ethereum?.isQrlWallet ? window.ethereum : null));
+    }, 250);
+  });
+}
+
+async function qrlRequest(method, params = []) {
+  if (!qrlProvider) throw new Error("Connect the QRL 2.0 wallet first");
+  const tryMethods = [method];
+  if (method.startsWith("qrl_")) tryMethods.push(method.replace(/^qrl_/, "zond_"), method.replace(/^qrl_/, "eth_"));
+  let last;
+  for (const m of tryMethods) {
+    try {
+      return await qrlProvider.request({ method: m, params });
+    } catch (err) {
+      last = err;
+    }
+  }
+  throw last || new Error(method);
+}
+
+async function walletSend(to, data) {
+  const from = qrlAccount;
+  if (!from) throw new Error("Connect the QRL 2.0 wallet first");
+  const tx = { from, to: toQ(to), data, value: "0x0" };
+  const hash = await qrlRequest("qrl_sendTransaction", [tx]);
+  return { tx: hash, from, to: toQ(to) };
+}
+
+async function walletAction(action, fields, s) {
+  const token = s.contract || cfg.usdcQ;
+  const bridge = s.bridge || cfg.bridgeQ;
+  const amt = units(fields.amount || "0", s.decimals || 6);
+  if (action === "transfer") return walletSend(token, calldata("0xa9059cbb", fields.to, amt));
+  if (action === "approve") return walletSend(token, calldata("0x095ea7b3", fields.spender, amt));
+  if (action === "burn") return walletSend(token, calldata("0x42966c68", amt));
+  if (action === "depositForBurn") {
+    return walletSend(bridge, calldata("0x01a8a164", amt, BigInt(fields.destinationDomain || 26), fields.mintRecipient));
+  }
+  throw new Error(`${action} is operator-only`);
+}
+
 async function refresh() {
+  if (!cfg.usdcQ) cfg = await loadConfig().catch(() => cfg);
   let s = {};
   let staticMode = false;
   try {
@@ -102,7 +179,8 @@ async function refresh() {
     } catch {
       snap = {};
     }
-    const c = await loadConfig();
+    cfg = await loadConfig();
+    const c = cfg;
     s = {
       ...c,
       ...snap,
@@ -132,7 +210,11 @@ for (const form of document.querySelectorAll("form[data-action]")) {
     const btn = form.querySelector("button[type=submit]");
     btn.disabled = true;
     try {
-      const out = await apiQrl(action, fields);
+      let out;
+      const operator = form.hasAttribute("data-operator");
+      if (!operator && qrlAccount) out = await walletAction(action, fields, await refresh());
+      else if (!staticMode) out = await apiQrl(action, fields);
+      else throw new Error("Connect the QRL 2.0 wallet to send this transaction");
       tape(out);
       if (out.error) $("live-badge").textContent = "tx error";
       else {
@@ -159,6 +241,23 @@ const ARC = {
   blockExplorerUrls: ["https://testnet.arcscan.app"],
 };
 
+$("qrl-connect").addEventListener("click", async () => {
+  try {
+    qrlProvider = await discoverQrlProvider();
+    if (!qrlProvider) {
+      $("qrl-account").innerHTML =
+        'No QRL 2.0 wallet found. Install from the <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">official release</a> (Chromium, Developer mode, Load unpacked).';
+      return;
+    }
+    const acc = await qrlRequest("qrl_requestAccounts");
+    qrlAccount = Array.isArray(acc) ? acc[0] : acc;
+    $("qrl-account").textContent = toQ(qrlAccount) || "connected";
+    tape({ connected: toQ(qrlAccount), via: qrlProvider.info?.name || "EIP-6963" });
+  } catch (err) {
+    $("qrl-account").textContent = err.message || String(err);
+  }
+});
+
 $("arc-connect").addEventListener("click", async () => {
   if (!window.ethereum) {
     $("arc-account").textContent = "No injected EVM wallet";
@@ -173,5 +272,9 @@ $("arc-connect").addEventListener("click", async () => {
   }
 });
 
+cfg = await loadConfig().catch(() => ({}));
+discoverQrlProvider().then((p) => {
+  if (p) $("qrl-account").textContent = "QRL 2.0 wallet detected — click Connect";
+});
 await refresh();
 setInterval(refresh, 12000);

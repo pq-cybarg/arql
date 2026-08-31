@@ -7,6 +7,7 @@
   "explorer": "https://zondscan.com",
   "wallet": {
     "extension": "https://github.com/theQRL/qrl-web3-wallet",
+    "releases": "https://github.com/theQRL/qrl-web3-wallet/releases/latest",
     "connect": "https://github.com/DigitalGuards/myqrlwallet-connect",
     "dappExample": "https://github.com/theQRL/zond-web3-wallet-dapp-example"
   },

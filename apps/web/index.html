@@ -52,7 +52,7 @@
           <label>Amount <input name="amount" value="1000" inputmode="decimal" /></label>
           <button type="submit">Approve</button>
         </form>
-        <form data-action="mint">
+        <form data-action="mint" data-operator="1">
           <label>Mint to <input name="to" id="mint-to" placeholder="Q… holder" /></label>
           <label>Amount <input name="amount" value="10" inputmode="decimal" /></label>
           <button type="submit">Mint</button>
@@ -74,7 +74,7 @@
           <input type="hidden" name="destinationDomain" value="26" />
           <button type="submit">Burn to Arc (domain 26)</button>
         </form>
-        <form data-action="receiveMint">
+        <form data-action="receiveMint" data-operator="1">
           <label>Mint from Arc (attester)
             <input name="to" id="recv-to" placeholder="Q… holder" />
           </label>
@@ -89,11 +89,19 @@
       </article>
 
       <article class="panel">
-        <h2>Arc wallet</h2>
-        <p class="vm">Injected EVM wallet · chain 5042002 · SLH-DSA attest on lock/unlock</p>
+        <h2>Wallets</h2>
+        <p class="vm">QRL 2.0 Web3 Wallet (EIP-6963) for QRC-20. Arc EVM wallet for the lockbox when it exists.</p>
+        <ol class="install">
+          <li>Open the official <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">QRL Web3 Wallet release</a>.</li>
+          <li>Download the Chrome zip, unzip it.</li>
+          <li>Go to <code>chrome://extensions</code>, enable Developer mode, Load unpacked, pick that folder.</li>
+          <li>Create or import a Testnet V2 account, then connect here.</li>
+        </ol>
+        <button type="button" id="qrl-connect">Connect QRL 2.0 wallet</button>
+        <p id="qrl-account" class="hint">Not connected</p>
         <button type="button" id="arc-connect">Connect Arc</button>
         <p id="arc-account" class="hint">Not connected</p>
-        <p class="hint">Lockbox is not on Arc Testnet yet. Connect to add the network; depositForBurn on Arc stays disabled until the lockbox address is in deployments.</p>
+        <p class="hint">Transfer, approve, burn, and QRL-to-Arc burn use the QRL extension. Mint/receive-mint stay operator-only. Arc lockbox is not on Testnet yet.</p>
       </article>
     </section>
 
@@ -173,6 +181,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=pages1"></script>
+  <script type="module" src="./app.js?v=wallet1"></script>
 </body>
 </html>
