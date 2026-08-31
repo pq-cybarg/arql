@@ -1,0 +1,64 @@
+// SPDX-License-Identifier: Apache-2.0
+// QRVM 20-byte bridge half: burn QRC-20 out, mint QRC-20 in.
+// Compile with @theqrl/hypc ^0.0.2. Authorization is the QRVM tx (ML-DSA-87).
+pragma hyperion ^0.0.2;
+
+interface IQRC20USDC {
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function burn(uint256 amount) external;
+    function mint(address to, uint256 amount) external;
+}
+
+contract ArqlBridge {
+    address public owner;
+    address public token;
+    uint32 public localDomain;
+    mapping(bytes32 => bool) public usedNonces;
+    mapping(address => bool) public sanctioned;
+    /// Arc messenger||minter||transmitter seal. Zero means not yet pinned
+    /// (lockbox undeployed). Once set, inbound mint must carry this seal.
+    bytes32 public expectedArcSeal;
+
+    event MessageSent(uint256 amount, uint32 destinationDomain, address mintRecipient, address indexed from);
+    event Minted(address indexed to, uint256 amount, bytes32 nonce);
+
+    constructor(address token_) {
+        owner = msg.sender;
+        token = token_;
+        localDomain = 42424;
+    }
+
+    function depositForBurn(uint256 amount, uint32 destinationDomain, address mintRecipient) external {
+        require(amount > 0, "amount");
+        require(mintRecipient != address(0), "to");
+        require(!sanctioned[msg.sender] && !sanctioned[mintRecipient], "sanctioned");
+        require(IQRC20USDC(token).transferFrom(msg.sender, address(this), amount), "pull");
+        IQRC20USDC(token).burn(amount);
+        emit MessageSent(amount, destinationDomain, mintRecipient, msg.sender);
+    }
+
+    function setExpectedArcSeal(bytes32 seal) external {
+        require(msg.sender == owner, "owner");
+        require(seal != bytes32(0), "seal");
+        expectedArcSeal = seal;
+    }
+
+    function setSanctioned(address account, bool on) external {
+        require(msg.sender == owner, "owner");
+        require(account != address(0), "zero");
+        sanctioned[account] = on;
+    }
+
+    function receiveMint(address to, uint256 amount, bytes32 nonce, bytes32 arcSeal) external {
+        require(msg.sender == owner, "attester");
+        require(expectedArcSeal != bytes32(0), "peer-unpinned");
+        require(arcSeal == expectedArcSeal, "peer-seal");
+        require(!usedNonces[nonce], "nonce");
+        require(to != address(0), "to");
+        require(amount > 0, "amount");
+        require(!sanctioned[to], "sanctioned");
+        usedNonces[nonce] = true;
+        IQRC20USDC(token).mint(to, amount);
+        emit Minted(to, amount, nonce);
+    }
+}

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ARQL desk — QRC-20 USDC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <header class="mast">
+    <div class="mark-row">
+      <div class="mark">ARQL</div>
+      <span class="live" id="live-badge">QRVM live</span>
+    </div>
+    <p class="lede">
+      Public QRL 2.0 Testnet V2 rail: QRC-20 USD Coin (not ERC-20), Q addresses, ML-DSA-87.
+      Native Circle USDC on Arc is locked, never wrapped. Arc admin and attestation are
+      SLH-DSA-SHA2-128s. secp256k1 cannot move value or re-key the bridge.
+    </p>
+  </header>
+
+  <main>
+    <section class="hero-q">
+      <p class="kicker">Operator QRC-20 USDC</p>
+      <p class="big" id="qrl-held">—</p>
+      <p class="sub" id="qrl-supply">loading…</p>
+      <dl>
+        <div><dt>contract</dt><dd><a id="qrl-contract" href="#" target="_blank" rel="noreferrer">—</a></dd></div>
+        <div><dt>holder</dt><dd><a id="qrl-holder" href="#" target="_blank" rel="noreferrer">—</a></dd></div>
+        <div><dt>bridge</dt><dd><a id="qrl-bridge" href="#" target="_blank" rel="noreferrer">—</a></dd></div>
+        <div><dt>minter</dt><dd id="qrl-minter">—</dd></div>
+        <div><dt>QRL gas</dt><dd id="qrl-gas">—</dd></div>
+        <div><dt>block</dt><dd id="qrl-block">—</dd></div>
+        <div><dt>sealed bridge</dt><dd><a id="qrl-sealed" href="#" target="_blank" rel="noreferrer">—</a></dd></div>
+      </dl>
+    </section>
+
+    <section class="board">
+      <article class="panel">
+        <h2>QRC-20</h2>
+        <form data-action="transfer">
+          <label>Transfer to <input name="to" placeholder="Q…" required /></label>
+          <label>Amount <input name="amount" value="1" inputmode="decimal" /></label>
+          <button type="submit">Transfer</button>
+        </form>
+        <form data-action="approve">
+          <label>Approve spender <input name="spender" id="approve-spender" placeholder="Q… bridge" /></label>
+          <label>Amount <input name="amount" value="1000" inputmode="decimal" /></label>
+          <button type="submit">Approve</button>
+        </form>
+        <form data-action="mint">
+          <label>Mint to <input name="to" id="mint-to" placeholder="Q… holder" /></label>
+          <label>Amount <input name="amount" value="10" inputmode="decimal" /></label>
+          <button type="submit">Mint</button>
+        </form>
+        <form data-action="burn">
+          <label>Burn amount <input name="amount" value="1" inputmode="decimal" /></label>
+          <button type="submit">Burn</button>
+        </form>
+      </article>
+
+      <article class="panel">
+        <h2>Bridge</h2>
+        <p class="vm">QRL → Arc burns QRC-20. Arc → QRL mints QRC-20 (attester).</p>
+        <form data-action="depositForBurn">
+          <label>Burn &amp; send to Arc recipient
+            <input name="mintRecipient" placeholder="Q… or 0x (padded on wire)" />
+          </label>
+          <label>Amount <input name="amount" value="1" inputmode="decimal" /></label>
+          <input type="hidden" name="destinationDomain" value="26" />
+          <button type="submit">Burn to Arc (domain 26)</button>
+        </form>
+        <form data-action="receiveMint">
+          <label>Mint from Arc (attester)
+            <input name="to" id="recv-to" placeholder="Q… holder" />
+          </label>
+          <label>Amount <input name="amount" value="1" inputmode="decimal" /></label>
+          <label>Nonce <input name="nonce" placeholder="auto if empty" /></label>
+          <label>Arc code seal
+            <input name="arcSeal" placeholder="0x… pinned expectedArcSeal" />
+          </label>
+          <button type="submit">Receive mint</button>
+        </form>
+        <p class="hint">Approve the bridge before burn. The live token minter is still the first bridge (unsealed mint). The sealed bridge is deployed but cannot take minter: setMinter is minter-only and the first bridge has no passthrough. receiveMint on the sealed contract requires a pinned Arc code seal.</p>
+      </article>
+
+      <article class="panel">
+        <h2>Arc wallet</h2>
+        <p class="vm">Injected EVM wallet · chain 5042002 · SLH-DSA attest on lock/unlock</p>
+        <button type="button" id="arc-connect">Connect Arc</button>
+        <p id="arc-account" class="hint">Not connected</p>
+        <p class="hint">Lockbox is not on Arc Testnet yet. Connect to add the network; depositForBurn on Arc stays disabled until the lockbox address is in deployments.</p>
+      </article>
+    </section>
+
+    <section class="disclosure" id="transparency">
+      <h2>Transparency</h2>
+      <p class="vm">What this rail does, what it refuses, and what is not live yet.</p>
+
+      <article class="disclose warn">
+        <h3>Warning: Arc consensus can swap bytecode</h3>
+        <p>
+          Arc validators still attest blocks with elliptic-curve signatures.
+          If that underlay is corrupted, or if precompile <code>0x1800..0004</code>
+          is made to lie, bytecode at a known address can be replaced without a
+          contract-level owner call. On-Arc SLH checks then run on a lying chain.
+          That risk is inherent to an EC-consensus L1. It is not closed by putting
+          SLH in the contracts.
+        </p>
+        <p>
+          <strong>Fix:</strong> QRVM (ML-DSA-87) is the controlling verifier.
+          Each messenger pins <code>extcodehash</code> of itself, its minter, and
+          its transmitter. Every burn body carries a code seal over chain id,
+          those addresses, and those hashes. QRL stores the expected Arc seal and
+          will not mint on <code>peer-seal</code> or <code>codehash</code> mismatch.
+          A second deploy of the same bytecode cannot impersonate the pinned
+          messenger (addresses are in the seal). A swapped Arc implementation can
+          still mutate Arc; it cannot mint on QRL unless the Dilithium owner also
+          re-pins the seal.
+        </p>
+      </article>
+
+      <div class="disclose-grid">
+        <article class="disclose">
+          <h3>How value moves</h3>
+          <ol>
+            <li>Arc → QRL: native USDC is <em>locked</em> in TokenMinter (Circle USDC is never burned by ARQL, never wrapped).</li>
+            <li>Message V2 is packed bytes64, not ABI. Relayer attests; QRL mints QRC-20 1:1.</li>
+            <li>QRL → Arc: QRC-20 is burned; Arc unlocks the same native USDC.</li>
+            <li>If QRL mint is rejected, Arc USDC stays in the lockbox. It is not minted on QRL, not returned automatically, not seizable. Retry is allowed; timeout refund is not (it would race a late mint).</li>
+          </ol>
+        </article>
+        <article class="disclose">
+          <h3>Post-quantum controls</h3>
+          <ul>
+            <li>Arc admin: owner + guardian SLH-DSA must both sign. Pauser can halt only.</li>
+            <li>Arc attestation: 2-of-N SLH-DSA. 64/65-byte ECDSA is <code>ecdsa-forbidden</code>.</li>
+            <li>User deposits require a registered per-account SLH key.</li>
+            <li>QRVM txs are ML-DSA-87. secp256k1 cannot submit them.</li>
+            <li>This page is static. It does not sign and does not hold keys.</li>
+          </ul>
+        </article>
+        <article class="disclose">
+          <h3>Sanctions and enterprise</h3>
+          <ul>
+            <li>Depositor, mint recipient, unlock <code>to</code>, and burn <code>from</code> are screened before value moves.</li>
+            <li>Compliance SLH can add names and freezes. Removing a name needs owner and guardian.</li>
+            <li>The Arc lockbox is not drained to a treasury. Seizing pooled escrow while a mint can still succeed would issue QRC-20 against missing USDC.</li>
+            <li>Circle FiatToken blacklist on official USDC remains independent. ARQL refuses earlier so we do not lock toward a name we will not mint to.</li>
+            <li>OFAC/SDN feeds stay off-chain and call <code>sanction</code> / <code>freeze</code>.</li>
+          </ul>
+        </article>
+        <article class="disclose">
+          <h3>What is live vs not</h3>
+          <ul>
+            <li>Live: QRC-20 USDC <a href="https://zondscan.com/address/Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9" target="_blank" rel="noreferrer">Q34ab8332...af9</a> (1000 minted). Minter is first bridge <a href="https://zondscan.com/address/Q89b8cdf9bddba27ac48938bd82d99f33796bcc05" target="_blank" rel="noreferrer">Q89b8cdf9...c05</a>.</li>
+            <li>Sealed bridge (fail-closed receiveMint + Arc seal) is at <a href="https://zondscan.com/address/Q360b826e5290ae8ebb0b58318c12085cb37d9dd8" target="_blank" rel="noreferrer">Q360b826e...dd8</a>. It is not the token minter: <code>setMinter</code> is minter-only and the first bridge has no passthrough.</li>
+            <li>Not live: Arc Testnet lockbox (chain 5042002). Arc → QRL lock/unlock waits on that deploy.</li>
+            <li>Wallets: <a href="https://github.com/theQRL/qrl-web3-wallet" target="_blank" rel="noreferrer">qrl-web3-wallet</a>, <a href="https://github.com/DigitalGuards/myqrlwallet-connect" target="_blank" rel="noreferrer">myqrlwallet-connect</a>.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="tape-wrap">
+      <div class="tape">
+        <div class="tape-label">last operation</div>
+        <pre id="tape-body">ready</pre>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="./app.js?v=pages1"></script>
+</body>
+</html>

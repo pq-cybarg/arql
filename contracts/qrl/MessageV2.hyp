@@ -1,0 +1,197 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma hyperion >=0.1.0;
+
+import {Bytes} from "./Bytes.hyp";
+
+/// ARQL message format: CCTP V2 shape extended to 64-byte addresses for QRVM.
+/// Packed (not ABI-encoded) so Arc's 32-byte EVM words and QRL's 64-byte QRVM
+/// words parse the same wire.
+///
+/// Header (244 bytes) + body:
+///   version u32 = 2 | sourceDomain u32 | destDomain u32 | nonce bytes32
+///   sender bytes64 | recipient bytes64 | destinationCaller bytes64
+///   minFinalityThreshold u32 | finalityThresholdExecuted u32 | body
+///
+/// Burn body (324 bytes + hook):
+///   version u32 = 2 | burnToken bytes64 | mintRecipient bytes64 | amount u256
+///   messageSender bytes64 | maxFee u256 | feeExecuted u256 | expirationBlock u256
+///   hookData
+library MessageV2 {
+    using Bytes for bytes;
+
+    uint32 internal constant VERSION = 2;
+    uint256 internal constant HEADER_LEN = 244;
+    uint256 internal constant BURN_FIXED = 324;
+
+    uint256 internal constant OFF_VERSION = 0;
+    uint256 internal constant OFF_SRC = 4;
+    uint256 internal constant OFF_DST = 8;
+    uint256 internal constant OFF_NONCE = 12;
+    uint256 internal constant OFF_SENDER = 44;
+    uint256 internal constant OFF_RECIPIENT = 108;
+    uint256 internal constant OFF_CALLER = 172;
+    uint256 internal constant OFF_MIN_FIN = 236;
+    uint256 internal constant OFF_FIN_EXEC = 240;
+    uint256 internal constant OFF_BODY = 244;
+
+    uint256 internal constant B_OFF_VERSION = 0;
+    uint256 internal constant B_OFF_TOKEN = 4;
+    uint256 internal constant B_OFF_MINT_TO = 68;
+    uint256 internal constant B_OFF_AMOUNT = 132;
+    uint256 internal constant B_OFF_SENDER = 164;
+    uint256 internal constant B_OFF_MAX_FEE = 228;
+    uint256 internal constant B_OFF_FEE_EXEC = 260;
+    uint256 internal constant B_OFF_EXPIRY = 292;
+    uint256 internal constant B_OFF_HOOK = 324;
+    uint256 internal constant SEAL_LEN = 32;
+
+    function encodeHeader(
+        uint32 sourceDomain,
+        uint32 destinationDomain,
+        bytes32 nonce,
+        bytes memory sender,
+        bytes memory recipient,
+        bytes memory destinationCaller,
+        uint32 minFinalityThreshold,
+        uint32 finalityThresholdExecuted,
+        bytes memory body
+    ) internal pure returns (bytes memory out) {
+        require(sender.length == 64 && recipient.length == 64 && destinationCaller.length == 64, "addr64");
+        out = new bytes(HEADER_LEN + body.length);
+        Bytes.writeUint32(out, OFF_VERSION, VERSION);
+        Bytes.writeUint32(out, OFF_SRC, sourceDomain);
+        Bytes.writeUint32(out, OFF_DST, destinationDomain);
+        Bytes.writeBytes32(out, OFF_NONCE, nonce);
+        Bytes.writeBytes(out, OFF_SENDER, sender);
+        Bytes.writeBytes(out, OFF_RECIPIENT, recipient);
+        Bytes.writeBytes(out, OFF_CALLER, destinationCaller);
+        Bytes.writeUint32(out, OFF_MIN_FIN, minFinalityThreshold);
+        Bytes.writeUint32(out, OFF_FIN_EXEC, finalityThresholdExecuted);
+        Bytes.writeBytes(out, OFF_BODY, body);
+    }
+
+    function encodeBurnBody(
+        bytes memory burnToken,
+        bytes memory mintRecipient,
+        uint256 amount,
+        bytes memory messageSender,
+        uint256 maxFee,
+        uint256 feeExecuted,
+        uint256 expirationBlock,
+        bytes memory hookData
+    ) internal pure returns (bytes memory out) {
+        require(burnToken.length == 64 && mintRecipient.length == 64 && messageSender.length == 64, "addr64");
+        out = new bytes(BURN_FIXED + hookData.length);
+        Bytes.writeUint32(out, B_OFF_VERSION, VERSION);
+        Bytes.writeBytes(out, B_OFF_TOKEN, burnToken);
+        Bytes.writeBytes(out, B_OFF_MINT_TO, mintRecipient);
+        Bytes.writeUint256(out, B_OFF_AMOUNT, amount);
+        Bytes.writeBytes(out, B_OFF_SENDER, messageSender);
+        Bytes.writeUint256(out, B_OFF_MAX_FEE, maxFee);
+        Bytes.writeUint256(out, B_OFF_FEE_EXEC, feeExecuted);
+        Bytes.writeUint256(out, B_OFF_EXPIRY, expirationBlock);
+        Bytes.writeBytes(out, B_OFF_HOOK, hookData);
+    }
+
+    function version(bytes memory m) internal pure returns (uint32) {
+        return Bytes.readUint32(m, OFF_VERSION);
+    }
+
+    function sourceDomain(bytes memory m) internal pure returns (uint32) {
+        return Bytes.readUint32(m, OFF_SRC);
+    }
+
+    function destinationDomain(bytes memory m) internal pure returns (uint32) {
+        return Bytes.readUint32(m, OFF_DST);
+    }
+
+    function nonce(bytes memory m) internal pure returns (bytes32) {
+        return Bytes.readBytes32(m, OFF_NONCE);
+    }
+
+    function sender(bytes memory m) internal pure returns (bytes memory) {
+        return Bytes.slice(m, OFF_SENDER, 64);
+    }
+
+    function recipient(bytes memory m) internal pure returns (bytes memory) {
+        return Bytes.slice(m, OFF_RECIPIENT, 64);
+    }
+
+    function destinationCaller(bytes memory m) internal pure returns (bytes memory) {
+        return Bytes.slice(m, OFF_CALLER, 64);
+    }
+
+    function minFinality(bytes memory m) internal pure returns (uint32) {
+        return Bytes.readUint32(m, OFF_MIN_FIN);
+    }
+
+    function finalityExecuted(bytes memory m) internal pure returns (uint32) {
+        return Bytes.readUint32(m, OFF_FIN_EXEC);
+    }
+
+    function body(bytes memory m) internal pure returns (bytes memory) {
+        require(m.length >= HEADER_LEN, "hdr");
+        return Bytes.slice(m, OFF_BODY, m.length - HEADER_LEN);
+    }
+
+    function validateHeader(bytes memory m) internal pure {
+        require(m.length >= HEADER_LEN, "hdr");
+        require(version(m) == VERSION, "ver");
+    }
+
+    function burnVersion(bytes memory b) internal pure returns (uint32) {
+        return Bytes.readUint32(b, B_OFF_VERSION);
+    }
+
+    function burnToken(bytes memory b) internal pure returns (bytes memory) {
+        return Bytes.slice(b, B_OFF_TOKEN, 64);
+    }
+
+    function mintRecipient(bytes memory b) internal pure returns (bytes memory) {
+        return Bytes.slice(b, B_OFF_MINT_TO, 64);
+    }
+
+    function amount(bytes memory b) internal pure returns (uint256) {
+        return Bytes.readUint256(b, B_OFF_AMOUNT);
+    }
+
+    function messageSender(bytes memory b) internal pure returns (bytes memory) {
+        return Bytes.slice(b, B_OFF_SENDER, 64);
+    }
+
+    function maxFee(bytes memory b) internal pure returns (uint256) {
+        return Bytes.readUint256(b, B_OFF_MAX_FEE);
+    }
+
+    function feeExecuted(bytes memory b) internal pure returns (uint256) {
+        return Bytes.readUint256(b, B_OFF_FEE_EXEC);
+    }
+
+    function expirationBlock(bytes memory b) internal pure returns (uint256) {
+        return Bytes.readUint256(b, B_OFF_EXPIRY);
+    }
+
+    function hookData(bytes memory b) internal pure returns (bytes memory) {
+        require(b.length >= BURN_FIXED, "burn");
+        return Bytes.slice(b, B_OFF_HOOK, b.length - BURN_FIXED);
+    }
+
+    /// First 32 bytes of hookData: keccak(messenger||minter||transmitter codehash).
+    function hookSeal(bytes memory b) internal pure returns (bytes32) {
+        bytes memory hook = hookData(b);
+        require(hook.length >= SEAL_LEN, "seal");
+        return Bytes.readBytes32(hook, 0);
+    }
+
+    function userHook(bytes memory b) internal pure returns (bytes memory) {
+        bytes memory hook = hookData(b);
+        if (hook.length <= SEAL_LEN) return "";
+        return Bytes.slice(hook, SEAL_LEN, hook.length - SEAL_LEN);
+    }
+
+    function validateBurn(bytes memory b) internal pure {
+        require(b.length >= BURN_FIXED, "burn");
+        require(burnVersion(b) == VERSION, "burn-ver");
+        require(b.length >= BURN_FIXED + SEAL_LEN, "seal");
+    }
+}

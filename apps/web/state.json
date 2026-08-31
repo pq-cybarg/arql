@@ -1,0 +1,22 @@
+{
+  "standard": "QRC-20",
+  "network": "qrl-testnet-v2",
+  "contract": "Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
+  "holder": "Q34cd38c76995e150ec583ff558cad07e08daad75",
+  "minter": "Q89b8cdf9bddba27ac48938bd82d99f33796bcc05",
+  "bridge": "Q89b8cdf9bddba27ac48938bd82d99f33796bcc05",
+  "symbol": "USDC",
+  "decimals": 6,
+  "total": 1000,
+  "held": 1000,
+  "allowance": 0,
+  "qrl": 9.991223769975427,
+  "block": 218994,
+  "deployTx": "0x845902c24c9c9e85def6be6988da2703a8333ca147dc7bb0581ede1df6403b87",
+  "mintTx": "0x0e8b64f7bd7442c5bf157d85fb3ccf2f7db5aa856ba03774bd33aecdede5e832",
+  "bridgeTx": "0x21aa847defe96668eb77249151056e22a01bc9d26282fbc925a512a0bd9a85e5",
+  "explorerToken": "https://zondscan.com/address/Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
+  "explorerBridge": "https://zondscan.com/address/Q89b8cdf9bddba27ac48938bd82d99f33796bcc05",
+  "sealedBridge": "Q360b826e5290ae8ebb0b58318c12085cb37d9dd8",
+  "snappedAt": "2026-08-31T02:23:30.402Z"
+}

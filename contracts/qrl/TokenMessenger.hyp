@@ -1,0 +1,176 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma hyperion >=0.1.0;
+
+import {Pausable} from "./Pausable.hyp";
+import {Bytes} from "./Bytes.hyp";
+import {MessageV2} from "./MessageV2.hyp";
+import {TokenMinter} from "./TokenMinter.hyp";
+import {IQRC20} from "./IQRC20.hyp";
+
+interface IQrlTransmitter {
+    function sendMessage(
+        uint32 destinationDomain,
+        bytes calldata recipient,
+        bytes calldata destinationCaller,
+        uint32 minFinalityThreshold,
+        bytes calldata messageBody
+    ) external returns (bytes32);
+}
+
+contract TokenMessenger is Pausable {
+    uint32 public localDomain;
+    address public transmitter;
+    TokenMinter public minter;
+    mapping(uint32 => bytes) public remoteTokenMessengers;
+    /// Expected keccak(Arc messenger||minter||transmitter codehash). Set by
+    /// the Dilithium owner. Arc ECDSA consensus cannot rotate this.
+    bytes32 public expectedPeerSeal;
+    bytes32 public localSealHash;
+    mapping(address => bool) public sanctioned;
+    mapping(bytes32 => bool) public sanctionedWire;
+
+    event RemoteTokenMessengerSet(uint32 indexed domain, bytes messenger);
+    event DepositForBurn(
+        uint256 amount,
+        uint32 indexed destinationDomain,
+        bytes mintRecipient,
+        address indexed burnToken,
+        bytes destinationCaller,
+        address indexed depositor,
+        bytes32 nonce
+    );
+    event MintAndWithdraw(address indexed mintRecipient, uint256 amount, address indexed mintToken);
+
+    modifier onlyTransmitter() {
+        require(msg.sender == transmitter, "transmitter");
+        _;
+    }
+
+    constructor(uint32 localDomain_, address transmitter_, TokenMinter minter_) {
+        localDomain = localDomain_;
+        transmitter = transmitter_;
+        minter = minter_;
+    }
+
+    function setMinter(TokenMinter minter_) external onlyOwner {
+        require(address(minter_) != address(0), "zero");
+        minter = minter_;
+    }
+
+    function setRemoteTokenMessenger(uint32 domain, bytes calldata messenger) external onlyOwner {
+        require(messenger.length == 64, "addr64");
+        remoteTokenMessengers[domain] = messenger;
+        emit RemoteTokenMessengerSet(domain, messenger);
+    }
+
+    function setPeerSeal(bytes32 seal) external onlyOwner {
+        require(seal != bytes32(0), "seal");
+        expectedPeerSeal = seal;
+    }
+
+    function setSanctioned(address account, bool on) external onlyOwner {
+        require(account != address(0), "zero");
+        sanctioned[account] = on;
+    }
+
+    function setSanctionedWire(bytes calldata addr64, bool on) external onlyOwner {
+        require(addr64.length == 64, "addr64");
+        sanctionedWire[keccak256(addr64)] = on;
+    }
+
+    /// Snapshot QRVM codehashes. Owner is ML-DSA-87; secp256k1 cannot call.
+    function freezeLocal() external onlyOwner {
+        localSealHash = keccak256(
+            abi.encode(
+                block.chainid,
+                address(this),
+                address(this).codehash,
+                address(minter),
+                address(minter).codehash,
+                transmitter,
+                transmitter.codehash
+            )
+        );
+        require(localSealHash != bytes32(0), "hash");
+    }
+
+    /// Return path: burn QRC-20 so Arc can unlock native USDC.
+    /// Authorization is the QRVM transaction signature (ML-DSA-87). There is
+    /// no ECDSA path on QRVM; a secp256k1 key cannot submit this call.
+    function depositForBurn(
+        uint256 amount,
+        uint32 destinationDomain,
+        bytes calldata mintRecipient,
+        address burnToken,
+        bytes calldata destinationCaller,
+        uint256 maxFee,
+        uint32 minFinalityThreshold
+    ) external whenNotPaused returns (bytes32 nonce) {
+        require(amount > 0, "amount");
+        require(mintRecipient.length == 64 && !Bytes.isZero64(mintRecipient), "mint-to");
+        require(destinationCaller.length == 64, "caller");
+        require(maxFee < amount, "max-fee");
+        require(localSealHash != bytes32(0), "unpinned");
+        require(!sanctioned[msg.sender], "sanctioned");
+        require(!sanctionedWire[keccak256(mintRecipient)], "sanctioned");
+        bytes memory remoteMessenger = remoteTokenMessengers[destinationDomain];
+        require(remoteMessenger.length == 64, "remote-msgr");
+
+        uint8 mode = minter.tokenMode(burnToken);
+        if (mode == minter.MODE_LOCK()) {
+            require(IQRC20(burnToken).transferFrom(msg.sender, address(minter), amount), "pull");
+            minter.lock(burnToken, msg.sender, amount);
+        } else if (mode == minter.MODE_MINT()) {
+            minter.burn(burnToken, msg.sender, amount);
+        } else {
+            revert("token");
+        }
+
+        bytes memory body = MessageV2.encodeBurnBody(
+            Bytes.fromAddress20(burnToken),
+            mintRecipient,
+            amount,
+            Bytes.fromAddress20(msg.sender),
+            maxFee,
+            0,
+            0,
+            abi.encodePacked(localSealHash)
+        );
+        nonce = IQrlTransmitter(transmitter).sendMessage(
+            destinationDomain, remoteMessenger, destinationCaller, minFinalityThreshold, body
+        );
+        emit DepositForBurn(amount, destinationDomain, mintRecipient, burnToken, destinationCaller, msg.sender, nonce);
+    }
+
+    function handleReceiveFinalizedMessage(
+        uint32 remoteDomain,
+        bytes calldata sender,
+        uint32,
+        bytes calldata messageBody
+    ) external onlyTransmitter returns (bool) {
+        require(Bytes.eq(sender, remoteTokenMessengers[remoteDomain]), "remote-msgr");
+        MessageV2.validateBurn(messageBody);
+        require(expectedPeerSeal != bytes32(0), "peer-unpinned");
+        require(MessageV2.hookSeal(messageBody) == expectedPeerSeal, "peer-seal");
+        uint256 amount = MessageV2.amount(messageBody);
+        require(amount > 0, "amount");
+        bytes memory remoteToken = MessageV2.burnToken(messageBody);
+        address local = minter.getLocalToken(remoteDomain, remoteToken);
+        require(local != address(0), "local-token");
+        bytes memory mintTo = MessageV2.mintRecipient(messageBody);
+        require(!sanctionedWire[keccak256(mintTo)], "sanctioned");
+        address to = Bytes.toAddress20(mintTo);
+        require(!sanctioned[to], "sanctioned");
+
+        uint8 mode = minter.tokenMode(local);
+        if (mode == minter.MODE_LOCK()) {
+            minter.unlock(local, to, amount);
+        } else if (mode == minter.MODE_MINT()) {
+            minter.mint(local, to, amount);
+        } else {
+            revert("token");
+        }
+        emit MintAndWithdraw(to, amount, local);
+        return true;
+    }
+}

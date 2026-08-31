@@ -1,0 +1,28 @@
+{
+  "name": "arql",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Arc Testnet ↔ QRL 2.0 QRVM USDC bridge (CCTP-shaped, 64-byte addresses)",
+  "scripts": {
+    "test": "forge test && node --test tests/js/*.test.mjs",
+    "test:forge": "forge test",
+    "test:js": "node --test tests/js/*.test.mjs",
+    "iris": "node services/iris/server.mjs",
+    "relayer": "node services/relayer/index.mjs",
+    "web": "node scripts/web-server.mjs",
+    "demo": "bash scripts/demo-local.sh",
+    "tui": "node scripts/tui.mjs",
+    "live:compile": "node live/compile.mjs",
+    "live:wallet": "node live/wallet.mjs",
+    "live:faucet": "node live/faucet.mjs",
+    "live:deploy": "node live/deploy.mjs",
+    "live:deploy-bridge": "node live/deploy-bridge.mjs"
+  },
+  "dependencies": {
+    "@theqrl/hypc": "^0.0.2",
+    "@theqrl/wallet.js": "^2.0.2",
+    "@theqrl/web3": "^0.4.4",
+    "viem": "^2.31.0"
+  }
+}

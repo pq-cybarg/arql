@@ -1,0 +1,29 @@
+{
+  "standard": "QRC-20",
+  "network": "qrl-testnet-v2",
+  "vm": "qrvm",
+  "chainId": 1337,
+  "rpc": "https://qrlwallet.com/api/qrl-rpc/testnet",
+  "explorer": "https://zondscan.com",
+  "wallet": {
+    "extension": "https://github.com/theQRL/qrl-web3-wallet",
+    "connect": "https://github.com/DigitalGuards/myqrlwallet-connect",
+    "dappExample": "https://github.com/theQRL/zond-web3-wallet-dapp-example"
+  },
+  "usdcQ": "Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
+  "bridgeQ": "Q89b8cdf9bddba27ac48938bd82d99f33796bcc05",
+  "holderQ": "Q34cd38c76995e150ec583ff558cad07e08daad75",
+  "decimals": 6,
+  "symbol": "USDC",
+  "name": "USD Coin",
+  "deployTx": "0x845902c24c9c9e85def6be6988da2703a8333ca147dc7bb0581ede1df6403b87",
+  "mintTx": "0x0e8b64f7bd7442c5bf157d85fb3ccf2f7db5aa856ba03774bd33aecdede5e832",
+  "bridgeTx": "0x21aa847defe96668eb77249151056e22a01bc9d26282fbc925a512a0bd9a85e5",
+  "sealedBridge": "Q360b826e5290ae8ebb0b58318c12085cb37d9dd8",
+  "sealedBridgeTx": "0x6310e5a8fe71608f3306672bec66082ec1527e1418597777cc41ea694589ddfb",
+  "bridgeMintSealed": false,
+  "arcLockbox": null,
+  "arcChainId": 5042002,
+  "arcDomain": 26,
+  "qrlDomain": 42424
+}

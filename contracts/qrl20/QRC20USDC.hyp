@@ -1,0 +1,156 @@
+// SPDX-License-Identifier: Apache-2.0
+// Live QRL 2.0 Testnet V2 (20-byte addresses, Q + 40 hex).
+// QRC-20 USD Coin for QRVM. Compile with @theqrl/hypc ^0.0.2.
+pragma hyperion ^0.0.2;
+
+contract QRC20USDC {
+    string private _name;
+    string private _symbol;
+    uint8 private _decimals;
+    address public minter;
+    address public compliance;
+    uint256 private _totalSupply;
+    mapping(address => uint256) private _balances;
+    mapping(address => mapping(address => uint256)) private _allowances;
+    mapping(address => bool) public blacklisted;
+    mapping(address => bool) public frozen;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Mint(address indexed to, uint256 amount);
+    event MinterUpdated(address indexed minter);
+    event Blacklisted(address indexed account);
+    event UnBlacklisted(address indexed account);
+    event Frozen(address indexed account);
+    event Unfrozen(address indexed account);
+    event ComplianceUpdated(address indexed compliance);
+
+    constructor() {
+        _name = "USD Coin";
+        _symbol = "USDC";
+        _decimals = 6;
+        minter = msg.sender;
+        compliance = msg.sender;
+    }
+
+    modifier notBlocked(address account) {
+        require(!blacklisted[account] && !frozen[account], "sanctioned");
+        _;
+    }
+
+    function name() public view returns (string memory) {
+        return _name;
+    }
+
+    function symbol() public view returns (string memory) {
+        return _symbol;
+    }
+
+    function decimals() public view returns (uint8) {
+        return _decimals;
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return _totalSupply;
+    }
+
+    function balanceOf(address account) public view returns (uint256) {
+        return _balances[account];
+    }
+
+    function allowance(address owner, address spender) public view returns (uint256) {
+        return _allowances[owner][spender];
+    }
+
+    function setMinter(address newMinter) external {
+        require(msg.sender == minter, "QRC20: not minter");
+        require(newMinter != address(0), "QRC20: zero minter");
+        minter = newMinter;
+        emit MinterUpdated(newMinter);
+    }
+
+    function setCompliance(address newCompliance) external {
+        require(msg.sender == compliance, "QRC20: not compliance");
+        require(newCompliance != address(0), "QRC20: zero");
+        compliance = newCompliance;
+        emit ComplianceUpdated(newCompliance);
+    }
+
+    function blacklist(address account) external {
+        require(msg.sender == compliance, "QRC20: not compliance");
+        blacklisted[account] = true;
+        emit Blacklisted(account);
+    }
+
+    function unBlacklist(address account) external {
+        require(msg.sender == compliance, "QRC20: not compliance");
+        blacklisted[account] = false;
+        emit UnBlacklisted(account);
+    }
+
+    function freeze(address account) external {
+        require(msg.sender == compliance, "QRC20: not compliance");
+        frozen[account] = true;
+        emit Frozen(account);
+    }
+
+    function unfreeze(address account) external {
+        require(msg.sender == compliance, "QRC20: not compliance");
+        frozen[account] = false;
+        emit Unfrozen(account);
+    }
+
+    function mint(address to, uint256 amount) external notBlocked(to) {
+        require(msg.sender == minter, "QRC20: not minter");
+        require(to != address(0), "QRC20: mint to zero");
+        require(amount > 0, "QRC20: zero amount");
+        _totalSupply += amount;
+        _balances[to] += amount;
+        emit Mint(to, amount);
+        emit Transfer(address(0), to, amount);
+    }
+
+    function burn(uint256 amount) external notBlocked(msg.sender) {
+        uint256 bal = _balances[msg.sender];
+        require(bal >= amount, "QRC20: burn exceeds balance");
+        _balances[msg.sender] = bal - amount;
+        _totalSupply -= amount;
+        emit Transfer(msg.sender, address(0), amount);
+    }
+
+    function transfer(address to, uint256 amount) public notBlocked(msg.sender) notBlocked(to) returns (bool) {
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
+
+    function approve(address spender, uint256 amount) public notBlocked(msg.sender) notBlocked(spender) returns (bool) {
+        require(spender != address(0), "QRC20: approve zero");
+        _allowances[msg.sender][spender] = amount;
+        emit Approval(msg.sender, spender, amount);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount)
+        public
+        notBlocked(msg.sender)
+        notBlocked(from)
+        notBlocked(to)
+        returns (bool)
+    {
+        uint256 allowed = _allowances[from][msg.sender];
+        require(allowed >= amount, "QRC20: insufficient allowance");
+        _allowances[from][msg.sender] = allowed - amount;
+        _transfer(from, to, amount);
+        return true;
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal {
+        require(from != address(0), "QRC20: transfer from zero");
+        require(to != address(0), "QRC20: transfer to zero");
+        uint256 bal = _balances[from];
+        require(bal >= amount, "QRC20: transfer exceeds balance");
+        _balances[from] = bal - amount;
+        _balances[to] += amount;
+        emit Transfer(from, to, amount);
+    }
+}

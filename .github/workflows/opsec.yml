@@ -1,0 +1,14 @@
+name: secret-scan
+on:
+  push:
+  pull_request:
+jobs:
+  trufflehog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: trufflesecurity/trufflehog@v3.88.30
+        with:
+          extra_args: --results=verified,unknown

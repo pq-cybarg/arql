@@ -1,0 +1,42 @@
+{
+  "arcTestnet": {
+    "name": "Arc Testnet",
+    "vm": "evm",
+    "chainId": 5042002,
+    "domain": 26,
+    "rpc": "https://rpc.testnet.arc.io",
+    "ws": "wss://rpc.testnet.arc.io",
+    "explorer": "https://testnet.arcscan.app",
+    "nativeCurrency": { "name": "USDC", "symbol": "USDC", "decimals": 18 },
+    "usdc": "0x3600000000000000000000000000000000000000",
+    "usdcDecimals": 6,
+    "confirmations": 1,
+    "finality": "deterministic",
+    "avgBlockTimeMs": 500,
+    "cctp": {
+      "tokenMessengerV2": "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
+      "messageTransmitterV2": "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275",
+      "note": "Official Circle CCTP on Arc. ARQL does not call these for QRL (not a Circle domain). Native USDC is locked in ARQL TokenMinter instead of burned."
+    },
+    "gasToken": "USDC"
+  },
+  "qrlTestnet": {
+    "name": "QRL 2.0 Testnet V2",
+    "vm": "qrvm",
+    "chainId": 1337,
+    "domain": 42424,
+    "rpc": "http://127.0.0.1:8545",
+    "rpcNamespace": "qrl",
+    "explorer": "https://zondscan.com",
+    "nativeCurrency": { "name": "Quanta", "symbol": "QRL", "decimals": 18 },
+    "addressPrefix": "Q",
+    "addressBytes": 20,
+    "addressBytesPostReset": 64,
+    "addressTransition": "midway: public explorer still Q+40 hex; tooling migrating to VM64 / 64-byte addresses (Q+128 hex, SHAKE256 checksum)",
+    "signatures": "ML-DSA-87",
+    "language": "hyperion",
+    "confirmations": 1,
+    "avgBlockTimeMs": 60000,
+    "gasToken": "QRL"
+  }
+}

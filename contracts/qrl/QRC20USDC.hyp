@@ -1,0 +1,175 @@
+// SPDX-License-Identifier: Apache-2.0
+// QRC-20 USD Coin for QRVM. Compile with hyperion, not solc.
+pragma hyperion >=0.1.0;
+
+import {IQRC20} from "./IQRC20.hyp";
+
+contract QRC20USDC is IQRC20 {
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    string public currency;
+    address public owner;
+    address public masterMinter;
+    bool public paused;
+    uint256 public totalSupply;
+
+    mapping(address => uint256) public balances;
+    mapping(address => mapping(address => uint256)) public allowed;
+    mapping(address => bool) public minters;
+    mapping(address => uint256) public minterAllowed;
+    mapping(address => bool) public blacklisted;
+
+    event Transfer(address indexed from, address indexed to, uint256 amount);
+    event Approval(address indexed owner, address indexed spender, uint256 amount);
+    event Mint(address indexed minter, address indexed to, uint256 amount);
+    event Burn(address indexed burner, uint256 amount);
+    event MinterConfigured(address indexed minter, uint256 allowedMint);
+    event Blacklisted(address indexed account);
+    event UnBlacklisted(address indexed account);
+    event Pause();
+    event Unpause();
+
+    constructor(string memory name_, string memory symbol_, string memory currency_, address masterMinter_) {
+        name = name_;
+        symbol = symbol_;
+        decimals = 6;
+        currency = currency_;
+        owner = msg.sender;
+        masterMinter = masterMinter_;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "not owner");
+        _;
+    }
+
+    modifier whenNotPaused() {
+        require(!paused, "paused");
+        _;
+    }
+
+    modifier notBlacklisted(address account) {
+        require(!blacklisted[account], "blacklisted");
+        _;
+    }
+
+    function pause() external onlyOwner {
+        paused = true;
+        emit Pause();
+    }
+
+    function unpause() external onlyOwner {
+        paused = false;
+        emit Unpause();
+    }
+
+    function configureMinter(address minter, uint256 allowedMint) external {
+        require(msg.sender == masterMinter, "master");
+        minters[minter] = true;
+        minterAllowed[minter] = allowedMint;
+        emit MinterConfigured(minter, allowedMint);
+    }
+
+    function blacklist(address account) external onlyOwner {
+        blacklisted[account] = true;
+        emit Blacklisted(account);
+    }
+
+    function unBlacklist(address account) external onlyOwner {
+        blacklisted[account] = false;
+        emit UnBlacklisted(account);
+    }
+
+    function mint(address to, uint256 amount)
+        external
+        whenNotPaused
+        notBlacklisted(msg.sender)
+        notBlacklisted(to)
+    {
+        require(minters[msg.sender], "minter");
+        require(to != address(0), "zero");
+        require(amount > 0, "amount");
+        uint256 allowedMint = minterAllowed[msg.sender];
+        require(amount <= allowedMint, "allowance");
+        minterAllowed[msg.sender] = allowedMint - amount;
+        totalSupply += amount;
+        balances[to] += amount;
+        emit Mint(msg.sender, to, amount);
+        emit Transfer(address(0), to, amount);
+    }
+
+    function burnFrom(address from, uint256 amount)
+        external
+        whenNotPaused
+        notBlacklisted(msg.sender)
+        notBlacklisted(from)
+    {
+        require(minters[msg.sender], "minter");
+        require(amount > 0, "amount");
+        uint256 bal = balances[from];
+        require(bal >= amount, "balance");
+        uint256 a = allowed[from][msg.sender];
+        require(a >= amount, "allowance");
+        allowed[from][msg.sender] = a - amount;
+        balances[from] = bal - amount;
+        totalSupply -= amount;
+        emit Burn(from, amount);
+        emit Transfer(from, address(0), amount);
+    }
+
+    function transfer(address to, uint256 amount)
+        external
+        whenNotPaused
+        notBlacklisted(msg.sender)
+        notBlacklisted(to)
+        returns (bool)
+    {
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount)
+        external
+        whenNotPaused
+        notBlacklisted(msg.sender)
+        notBlacklisted(from)
+        notBlacklisted(to)
+        returns (bool)
+    {
+        uint256 a = allowed[from][msg.sender];
+        require(a >= amount, "allowance");
+        allowed[from][msg.sender] = a - amount;
+        _transfer(from, to, amount);
+        return true;
+    }
+
+    function approve(address spender, uint256 amount)
+        external
+        whenNotPaused
+        notBlacklisted(msg.sender)
+        notBlacklisted(spender)
+        returns (bool)
+    {
+        allowed[msg.sender][spender] = amount;
+        emit Approval(msg.sender, spender, amount);
+        return true;
+    }
+
+    function allowance(address tokenOwner, address spender) external view returns (uint256) {
+        return allowed[tokenOwner][spender];
+    }
+
+    function balanceOf(address account) external view returns (uint256) {
+        return balances[account];
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal {
+        require(to != address(0), "zero");
+        uint256 bal = balances[from];
+        require(bal >= amount, "balance");
+        balances[from] = bal - amount;
+        balances[to] += amount;
+        emit Transfer(from, to, amount);
+    }
+}

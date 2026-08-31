@@ -1,0 +1,93 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma hyperion >=0.1.0;
+
+/// Packed big-endian readers/writers. No assembly so the same logic ports to Hyperion/QRVM.
+library Bytes {
+    function readUint32(bytes memory b, uint256 off) internal pure returns (uint32 v) {
+        require(b.length >= off + 4, "oob32");
+        v = (uint32(uint8(b[off])) << 24) | (uint32(uint8(b[off + 1])) << 16)
+            | (uint32(uint8(b[off + 2])) << 8) | uint32(uint8(b[off + 3]));
+    }
+
+    function readUint256(bytes memory b, uint256 off) internal pure returns (uint256 v) {
+        require(b.length >= off + 32, "oob256");
+        for (uint256 i = 0; i < 32; i++) {
+            v = (v << 8) | uint8(b[off + i]);
+        }
+    }
+
+    function readBytes32(bytes memory b, uint256 off) internal pure returns (bytes32) {
+        return bytes32(readUint256(b, off));
+    }
+
+    function slice(bytes memory b, uint256 off, uint256 len) internal pure returns (bytes memory out) {
+        require(b.length >= off + len, "oobslice");
+        out = new bytes(len);
+        for (uint256 i = 0; i < len; i++) {
+            out[i] = b[off + i];
+        }
+    }
+
+    function writeUint32(bytes memory b, uint256 off, uint32 v) internal pure {
+        b[off] = bytes1(uint8(v >> 24));
+        b[off + 1] = bytes1(uint8(v >> 16));
+        b[off + 2] = bytes1(uint8(v >> 8));
+        b[off + 3] = bytes1(uint8(v));
+    }
+
+    function writeUint256(bytes memory b, uint256 off, uint256 v) internal pure {
+        for (uint256 i = 0; i < 32; i++) {
+            b[off + 31 - i] = bytes1(uint8(v));
+            v >>= 8;
+        }
+    }
+
+    function writeBytes32(bytes memory b, uint256 off, bytes32 v) internal pure {
+        writeUint256(b, off, uint256(v));
+    }
+
+    function writeBytes(bytes memory b, uint256 off, bytes memory src) internal pure {
+        for (uint256 i = 0; i < src.length; i++) {
+            b[off + i] = src[i];
+        }
+    }
+
+    /// Left-pad a 20-byte EVM/current-QRL address into a 64-byte QRVM field.
+    function fromAddress20(address a) internal pure returns (bytes memory out) {
+        out = new bytes(64);
+        uint160 v = uint160(a);
+        for (uint256 i = 0; i < 20; i++) {
+            out[44 + 19 - i] = bytes1(uint8(v));
+            v >>= 8;
+        }
+    }
+
+    /// Recover a 20-byte address from a 64-byte field. Reverts if the high 44 bytes are nonzero.
+    function toAddress20(bytes memory a64) internal pure returns (address) {
+        require(a64.length == 64, "addr64");
+        for (uint256 i = 0; i < 44; i++) {
+            require(a64[i] == 0, "wide-addr");
+        }
+        uint160 v;
+        for (uint256 i = 0; i < 20; i++) {
+            v = (v << 8) | uint8(a64[44 + i]);
+        }
+        return address(v);
+    }
+
+    function isZero64(bytes memory a64) internal pure returns (bool) {
+        if (a64.length != 64) return false;
+        for (uint256 i = 0; i < 64; i++) {
+            if (a64[i] != 0) return false;
+        }
+        return true;
+    }
+
+    function eq(bytes memory a, bytes memory b) internal pure returns (bool) {
+        if (a.length != b.length) return false;
+        for (uint256 i = 0; i < a.length; i++) {
+            if (a[i] != b[i]) return false;
+        }
+        return true;
+    }
+}
