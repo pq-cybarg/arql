@@ -95,7 +95,7 @@
           <li>Open the official <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">QRL Web3 Wallet release</a>.</li>
           <li>Download the Chrome zip, unzip it.</li>
           <li>Go to <code>chrome://extensions</code>, enable Developer mode, Load unpacked, pick that folder.</li>
-          <li>Create or import a Testnet V2 account, then connect here.</li>
+          <li>Create or import a Testnet V2 account. Set the network RPC to <code>https://qrlwallet.com/api/qrl-rpc/testnet</code> (HTTPS). A local <code>http://…:8545</code> node will fail.</li>
         </ol>
         <button type="button" id="qrl-connect">Connect QRL 2.0 wallet</button>
         <p id="qrl-account" class="hint">Not connected</p>
@@ -181,6 +181,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=wallet1"></script>
+  <script type="module" src="./app.js?v=wallet2"></script>
 </body>
 </html>

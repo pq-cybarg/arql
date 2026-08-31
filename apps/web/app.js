@@ -105,32 +105,41 @@ function calldata(sel, ...words) {
   return sel + words.map((w) => pad64(typeof w === "bigint" ? w.toString(16) : String(w))).join("");
 }
 
-function discoverQrlProvider() {
-  return new Promise((resolve) => {
-    const found = [];
-    const on = (ev) => {
-      const d = ev.detail || {};
-      if (d.provider) found.push(d);
-    };
-    window.addEventListener("eip6963:announceProvider", on);
-    window.dispatchEvent(new Event("eip6963:requestProvider"));
-    setTimeout(() => {
-      window.removeEventListener("eip6963:announceProvider", on);
-      const qrl = found.find((x) => {
-        const n = `${x.info?.rdns || ""} ${x.info?.name || ""}`.toLowerCase();
-        return n.includes("qrl") || n.includes("zond") || x.provider?.isQrlWallet;
-      });
-      resolve(qrl?.provider || window.qrl || (window.ethereum?.isQrlWallet ? window.ethereum : null));
-    }, 250);
+const eip6963 = new Map();
+let eip6963Asked = false;
+
+function isQrlInfo(info, provider) {
+  const n = `${info?.rdns || ""} ${info?.name || ""}`.toLowerCase();
+  return n.includes("qrl") || n.includes("zond") || !!provider?.isQrlWallet;
+}
+
+function pickQrlProvider() {
+  for (const d of eip6963.values()) {
+    if (isQrlInfo(d.info, d.provider)) return d.provider;
+  }
+  return window.qrl || null;
+}
+
+function watchEip6963() {
+  window.addEventListener("eip6963:announceProvider", (ev) => {
+    const d = ev.detail;
+    if (d?.info?.uuid && d.provider) eip6963.set(d.info.uuid, d);
   });
+  if (!eip6963Asked) {
+    eip6963Asked = true;
+    window.dispatchEvent(new Event("eip6963:requestProvider"));
+  }
 }
 
 async function qrlRequest(method, params = []) {
   if (!qrlProvider) throw new Error("Connect the QRL 2.0 wallet first");
   const tryMethods = [method];
-  if (method.startsWith("qrl_")) tryMethods.push(method.replace(/^qrl_/, "zond_"), method.replace(/^qrl_/, "eth_"));
+  if (method.startsWith("qrl_")) tryMethods.push(method.replace(/^qrl_/, "zond_"));
+  if (method.startsWith("wallet_")) {
+    tryMethods.push(method.replaceAll("Zond", "Qrl"), method.replaceAll("Qrl", "Zond"));
+  }
   let last;
-  for (const m of tryMethods) {
+  for (const m of [...new Set(tryMethods)]) {
     try {
       return await qrlProvider.request({ method: m, params });
     } catch (err) {
@@ -138,6 +147,28 @@ async function qrlRequest(method, params = []) {
     }
   }
   throw last || new Error(method);
+}
+
+async function ensureQrlHttpsRpc() {
+  const chainId = "0x" + Number(cfg.chainId || 1337).toString(16);
+  const add = {
+    chainId,
+    chainName: "QRL Testnet V2",
+    rpcUrls: [cfg.rpc || "https://qrlwallet.com/api/qrl-rpc/testnet"],
+    blockExplorerUrls: [cfg.explorer || "https://zondscan.com"],
+    nativeCurrency: { name: "Quanta", symbol: "QRL", decimals: 18 },
+  };
+  try {
+    await qrlRequest("wallet_switchZondChain", [{ chainId }]);
+    return;
+  } catch {
+    /* add */
+  }
+  try {
+    await qrlRequest("wallet_addZondChain", [add]);
+  } catch {
+    /* wallet uses its own network list */
+  }
 }
 
 async function walletSend(to, data) {
@@ -243,18 +274,24 @@ const ARC = {
 
 $("qrl-connect").addEventListener("click", async () => {
   try {
-    qrlProvider = await discoverQrlProvider();
+    qrlProvider = pickQrlProvider();
     if (!qrlProvider) {
       $("qrl-account").innerHTML =
-        'No QRL 2.0 wallet found. Install from the <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">official release</a> (Chromium, Developer mode, Load unpacked).';
+        'No QRL 2.0 wallet found. Install from the <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">official release</a>, then reload this page.';
       return;
     }
+    await ensureQrlHttpsRpc();
     const acc = await qrlRequest("qrl_requestAccounts");
     qrlAccount = Array.isArray(acc) ? acc[0] : acc;
     $("qrl-account").textContent = toQ(qrlAccount) || "connected";
-    tape({ connected: toQ(qrlAccount), via: qrlProvider.info?.name || "EIP-6963" });
+    tape({ connected: toQ(qrlAccount) });
   } catch (err) {
-    $("qrl-account").textContent = err.message || String(err);
+    const msg = err.message || String(err);
+    $("qrl-account").textContent = msg;
+    tape({
+      error: msg,
+      hint: "In the QRL wallet, use Testnet with HTTPS RPC https://qrlwallet.com/api/qrl-rpc/testnet (not a local http://...:8545 node).",
+    });
   }
 });
 
@@ -272,9 +309,10 @@ $("arc-connect").addEventListener("click", async () => {
   }
 });
 
+watchEip6963();
 cfg = await loadConfig().catch(() => ({}));
-discoverQrlProvider().then((p) => {
-  if (p) $("qrl-account").textContent = "QRL 2.0 wallet detected — click Connect";
-});
+setTimeout(() => {
+  if (pickQrlProvider()) $("qrl-account").textContent = "QRL 2.0 wallet detected — click Connect";
+}, 400);
 await refresh();
 setInterval(refresh, 12000);
