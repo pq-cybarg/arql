@@ -11,6 +11,7 @@
     "iris": "node services/iris/server.mjs",
     "relayer": "node services/relayer/index.mjs",
     "web": "node scripts/web-server.mjs",
+    "faucet:arc-refill": "node scripts/arc-usdc-refill.mjs",
     "demo": "bash scripts/demo-local.sh",
     "tui": "node scripts/tui.mjs",
     "live:compile": "node live/compile.mjs",

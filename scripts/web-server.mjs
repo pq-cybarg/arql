@@ -5,6 +5,7 @@ import { extname, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getWeb3, loadMeta, loadAbis, send, units, toQ } from "../live/operator.mjs";
 import { qrlRpc } from "../live/rpc.mjs";
+import { faucetCheck, faucetCommit, faucetStatus } from "./faucet-lib.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../apps/web");
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -90,6 +91,7 @@ async function state() {
     sealedBridge: live.sealedBridge || null,
     explorerSealedBridge: live.explorerSealedBridge || null,
     bridgeMintSealed: !!live.bridgeMintSealed,
+    faucet: faucetStatus(),
   };
 }
 
@@ -109,6 +111,20 @@ async function encodeAndSend(action, body) {
   if (action === "approve") {
     const spender = toQ(body.spender || live.bridgeQ);
     return send(live.usdcQ, token.methods.approve(spender, amt).encodeABI(), 80000n);
+  }
+  if (action === "faucet") {
+    const rail = body.rail === "arc" ? "arc" : "qrl";
+    const { st, key, amount } = faucetCheck(toAddr);
+    if (rail === "arc") {
+      throw new Error("Arc faucet inventory is filled on this machine via npm run faucet:arc-refill; sending is not wired until an Arc operator account is set");
+    }
+    const v1 = new web3.qrl.Contract(
+      [{ type: "function", name: "mint", inputs: [{ type: "address", name: "to" }, { type: "uint256", name: "amount" }], outputs: [] }],
+      live.bridgeQ,
+    );
+    const sent = await send(live.bridgeQ, v1.methods.mint(toAddr, units(String(amount))).encodeABI());
+    const rec = faucetCommit(st, key, amount);
+    return { ...sent, faucet: rec, rail };
   }
   if (action === "mint") {
     if (live.bridgeMintSealed) {

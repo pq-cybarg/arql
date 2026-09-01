@@ -27,3 +27,4 @@ scripts/opsec*
 .githooks/
 deployments/iris-store.json
 deployments/local.json
+.data/

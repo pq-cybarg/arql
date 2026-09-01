@@ -61,9 +61,13 @@ function paint(s) {
   $("qrl-minter").textContent = s.minter || "—";
   $("qrl-gas").textContent = `${Number(s.qrl).toFixed(6)} QRL`;
   $("qrl-block").textContent = String(s.block);
-  if (!$("approve-spender").value && s.bridge) $("approve-spender").value = s.bridge;
-  if (!$("mint-to").value) $("mint-to").value = s.holder;
-  if (!$("recv-to").value) $("recv-to").value = s.holder;
+  if ($("approve-spender") && !$("approve-spender").value && s.bridge) $("approve-spender").value = s.bridge;
+  if ($("mint-to") && !$("mint-to").value) $("mint-to").value = s.holder;
+  if ($("recv-to") && !$("recv-to").value) $("recv-to").value = s.holder;
+  if ($("faucet-status") && s.faucet) {
+    $("faucet-status").textContent =
+      `${s.faucet.remainingToday} USDC left today · ${s.faucet.perAccount} per address · day cap ${s.faucet.dailyTotal}`;
+  }
 }
 
 function tape(obj) {
@@ -253,6 +257,21 @@ const ARC = {
   rpcUrls: ["https://rpc.testnet.arc.io"],
   blockExplorerUrls: ["https://testnet.arcscan.app"],
 };
+
+async function claimFaucet(rail) {
+  const to = qrlAccount || (await refresh()).holder;
+  tape({ status: "faucet", rail, to });
+  if (staticMode) {
+    tape("Faucet needs the local desk (npm run web). GitHub Pages cannot mint.");
+    return;
+  }
+  const out = await apiQrl("faucet", { rail, to, amount: "2" });
+  tape(out);
+  setTimeout(refresh, 4000);
+}
+
+$("faucet-qrl")?.addEventListener("click", () => claimFaucet("qrl"));
+$("faucet-arc")?.addEventListener("click", () => claimFaucet("arc"));
 
 $("qrl-connect").addEventListener("click", async () => {
   try {
