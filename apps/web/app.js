@@ -128,20 +128,7 @@ function watchEip6963() {
 
 async function qrlRequest(method, params = []) {
   if (!qrlProvider) throw new Error("Connect the QRL 2.0 wallet first");
-  const tryMethods = [method];
-  if (method.startsWith("qrl_")) tryMethods.push(method.replace(/^qrl_/, "zond_"));
-  if (method.startsWith("wallet_addQrl") || method.startsWith("wallet_switchQrl")) {
-    tryMethods.push(method.replace("Qrl", "Zond"));
-  }
-  let last;
-  for (const m of tryMethods) {
-    try {
-      return await qrlProvider.request({ method: m, params });
-    } catch (err) {
-      last = err;
-    }
-  }
-  throw last || new Error(method);
+  return qrlProvider.request({ method, params });
 }
 
 async function ensureQrlHttpsRpc() {
@@ -154,13 +141,13 @@ async function ensureQrlHttpsRpc() {
     nativeCurrency: { name: "Quanta", symbol: "QRL", decimals: 18 },
   };
   try {
-    await qrlRequest("wallet_switchQrlChain", [{ chainId }]);
+    await qrlRequest("wallet_switchQRLChain", [{ chainId }]);
     return;
   } catch {
     /* add */
   }
   try {
-    await qrlRequest("wallet_addQrlChain", [add]);
+    await qrlRequest("wallet_addQRLChain", [add]);
   } catch {
     /* extension network list */
   }
