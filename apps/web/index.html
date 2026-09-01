@@ -46,7 +46,7 @@
         <p id="qrl-account" class="hint">Not connected</p>
         <button type="button" id="arc-connect">Connect Arc wallet</button>
         <p id="arc-account" class="hint">Not connected</p>
-        <p class="hint">Wallet: <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">QRL Web3 Wallet release</a>. If Testnet cannot reach a node, edit the chain RPC in the wallet to <code>https://qrlwallet.com/api/qrl-rpc/testnet</code>.</p>
+        <p class="hint warn-rpc">The wallet ships Testnet RPC <code>http://209.250.255.226:8545</code>. That host is dead. Connect will ask you to add <code>https://qrlwallet.com/api/qrl-rpc/testnet</code>. If you already added Testnet, open the wallet → networks → edit that chain and replace the RPC. Token import and drip will fail until this is HTTPS.</p>
       </li>
       <li class="panel">
         <h2>2. Get test USDC on QRL</h2>
@@ -54,7 +54,7 @@
         <button type="button" id="faucet-qrl">Drip 2 USDC (on-chain)</button>
         <button type="button" id="add-token">Add USDC to QRL wallet</button>
         <button type="button" id="faucet-arc">Open Circle Arc faucet</button>
-        <p id="faucet-status" class="hint">Contract Qa02527193ef60264810de234c7812700d2db9a2e · gas only</p>
+        <p id="faucet-status" class="hint">On-chain drip · 2 USDC / address / day · gas only</p>
         <p class="hint">Import in the wallet with the <strong>Q</strong> address (not 0x): <code id="token-q">Qadf94bb6e061a9f3b1d54826241eba701d43fb86</code> · USD Coin · USDC · 6 decimals. Or click Add USDC to QRL wallet.</p>
       </li>
       <li class="panel">
@@ -191,6 +191,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux13"></script>
+  <script type="module" src="./app.js?v=ux14"></script>
 </body>
 </html>

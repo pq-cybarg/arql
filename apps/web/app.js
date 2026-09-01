@@ -226,23 +226,24 @@ async function qrlRequest(method, params = []) {
 
 async function ensureQrlHttpsRpc() {
   const chainId = "0x" + Number(cfg.chainId || 1337).toString(16);
+  const rpc = cfg.rpc || "https://qrlwallet.com/api/qrl-rpc/testnet";
   const add = {
     chainId,
-    chainName: "QRL Testnet V2",
-    rpcUrls: [cfg.rpc || "https://qrlwallet.com/api/qrl-rpc/testnet"],
+    chainName: "QRL Testnet V2 (public HTTPS)",
+    rpcUrls: [rpc],
     blockExplorerUrls: [cfg.explorer || "https://zondscan.com"],
     nativeCurrency: { name: "Quanta", symbol: "QRL", decimals: 18 },
   };
-  try {
-    await qrlRequest("wallet_switchQRLChain", [{ chainId }]);
-    return;
-  } catch {
-    /* add */
-  }
+  // Add first. Switch-only would keep the dead 209.250.255.226:8545 node.
   try {
     await qrlRequest("wallet_addQRLChain", [add]);
   } catch {
-    /* extension network list */
+    /* already present */
+  }
+  try {
+    await qrlRequest("wallet_switchQRLChain", [{ chainId }]);
+  } catch {
+    /* user rejected */
   }
 }
 
@@ -374,6 +375,7 @@ async function ensureQrlConnected() {
   if (qrlAccount && qrlProvider) return qrlAccount;
   qrlProvider = pickQrlProvider();
   if (!qrlProvider) throw new Error("Install and unlock the official QRL 2.0 wallet, then retry");
+  await ensureQrlHttpsRpc();
   const acc = await qrlRequest("qrl_requestAccounts");
   qrlAccount = Array.isArray(acc) ? acc[0] : acc;
   if ($("qrl-account")) $("qrl-account").textContent = toQ(qrlAccount) || "connected";
