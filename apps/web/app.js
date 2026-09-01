@@ -455,21 +455,23 @@ $("add-token")?.addEventListener("click", async () => {
     if (!cfg.usdcQ) cfg = await loadConfig();
     const ok = await qrlProvider.request({
       method: "wallet_watchAsset",
-      params: {
-        type: "ERC20",
-        options: {
-          address: toQ(cfg.usdcQ),
-          symbol: "USDC",
-          decimals: 6,
-          image: cfg.tokenImage || new URL("./usdc.png", location.href).href,
+      params: [
+        {
+          type: "ERC20",
+          options: {
+            address: toQ(cfg.usdcQ),
+            symbol: "USDC",
+            decimals: 6,
+            image: cfg.tokenImage || new URL("./usdc.png", location.href).href,
+          },
         },
-      },
+      ],
     });
     tape({ watchAsset: ok, token: toQ(cfg.usdcQ), symbol: "USDC", decimals: 6 });
   } catch (err) {
     tape({
       error: err.message || String(err),
-      hint: "Import with the Q address (not 0x), symbol USDC, decimals 6. Or use Add USDC to QRL wallet.",
+      hint: "The wallet re-reads name/symbol/decimals from chain. RPC must be https://qrlwallet.com/api/qrl-rpc/testnet (not 209.250.255.226). Token Qadf94bb6e061a9f3b1d54826241eba701d43fb86 USDC 6.",
     });
   }
 });
