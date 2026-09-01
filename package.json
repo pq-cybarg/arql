@@ -20,7 +20,9 @@
     "live:deploy": "node live/deploy.mjs",
     "live:deploy-bridge": "node live/deploy-bridge.mjs",
     "live:compile-reports": "node live/compile-reports.mjs",
-    "live:deploy-reports": "node live/deploy-reports.mjs"
+    "live:deploy-reports": "node live/deploy-reports.mjs",
+    "live:compile-faucet": "node live/compile-faucet.mjs",
+    "live:deploy-faucet": "node live/deploy-faucet.mjs"
   },
   "dependencies": {
     "@theqrl/hypc": "^0.0.2",

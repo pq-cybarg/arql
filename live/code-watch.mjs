@@ -40,6 +40,7 @@ export async function watchOnChainCode(cfg = {}) {
     { name: "bridge (minter)", address: cfg.bridgeQ, artifact: "ArqlBridge.json", source: "contracts/qrl20/ArqlBridge.hyp" },
     { name: "sealed bridge", address: cfg.sealedBridge, artifact: "ArqlBridge.json", source: "contracts/qrl20/ArqlBridge.hyp" },
     { name: "report board", address: cfg.reportBoardQ, artifact: "ReportBoard.json", source: "contracts/qrl20/ReportBoard.hyp" },
+    { name: "USDC faucet", address: cfg.faucetQ, artifact: "UsdcFaucet.json", source: "contracts/qrl20/UsdcFaucet.hyp" },
   ].filter((j) => j.address);
 
   const alarms = [];

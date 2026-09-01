@@ -1,0 +1,47 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma hyperion ^0.0.2;
+
+interface IQRC20 {
+    function transfer(address to, uint256 amount) external returns (bool);
+}
+
+/// Holds QRC-20 USDC and drips a capped amount to msg.sender.
+/// 2 USDC per address per UTC day, 9 USDC total per day.
+/// Callers pay only gas. No operator API.
+contract UsdcFaucet {
+    address public token;
+    address public owner;
+    uint256 public constant PER_ACCOUNT = 2_000_000;
+    uint256 public constant DAILY_TOTAL = 9_000_000;
+    uint256 public dayStart;
+    uint256 public dayTotal;
+    mapping(address => uint256) public lastDay;
+
+    event Drip(address indexed account, uint256 amount, uint256 day);
+
+    constructor(address token_) {
+        require(token_ != address(0), "token");
+        token = token_;
+        owner = msg.sender;
+    }
+
+    function drip() external {
+        uint256 day = block.timestamp / 86400;
+        if (day != dayStart) {
+            dayStart = day;
+            dayTotal = 0;
+        }
+        require(lastDay[msg.sender] != day, "claimed");
+        require(dayTotal + PER_ACCOUNT <= DAILY_TOTAL, "empty");
+        lastDay[msg.sender] = day;
+        dayTotal += PER_ACCOUNT;
+        require(IQRC20(token).transfer(msg.sender, PER_ACCOUNT), "xfer");
+        emit Drip(msg.sender, PER_ACCOUNT, day);
+    }
+
+    function sweep(address to, uint256 amount) external {
+        require(msg.sender == owner, "owner");
+        require(to != address(0), "to");
+        require(IQRC20(token).transfer(to, amount), "xfer");
+    }
+}

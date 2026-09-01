@@ -323,15 +323,26 @@ const ARC = {
 };
 
 async function claimFaucet(rail) {
-  const to = qrlAccount || (await refresh()).holder;
-  tape({ status: "faucet", rail, to });
-  if (staticMode) {
-    tape("Faucet needs the local desk (npm run web). GitHub Pages cannot mint.");
+  try {
+  const s = await refresh();
+  if (rail === "qrl") {
+    const faucet = cfg.faucetQ || s.faucetQ;
+    if (!faucet) throw new Error("on-chain faucet not deployed");
+    const out = await walletSend(faucet, "0x9f678cca");
+    tape(out);
+    setTimeout(refresh, 5000);
     return;
   }
-  const out = await apiQrl("faucet", { rail, to, amount: "2" });
+  if (staticMode) {
+    tape("Arc faucet inventory is filled on the operator machine; QRL drip is the on-chain contract.");
+    return;
+  }
+  const out = await apiQrl("faucet", { rail, to: qrlAccount || s.holder, amount: "2" });
   tape(out);
   setTimeout(refresh, 4000);
+  } catch (err) {
+    tape({ error: err.message || String(err) });
+  }
 }
 
 async function sanc(action, on) {
