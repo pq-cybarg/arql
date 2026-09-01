@@ -24,15 +24,15 @@ cannot un-sanction an SDN name.
 
 ## What we deliberately do not do
 
-**The Arc lockbox is not seizable through ARQL.** Native USDC in
-`TokenMinter` is a pooled escrow for in-flight CCTP-shaped messages.
-Draining it to a treasury while a QRL mint can still succeed would
-issue QRC-20 against missing Arc USDC (over-issuance). Stuck funds stay
-in the minter: conserved, not returned, not stolen.
+**Native USDC in TokenMinter is not seizable through ARQL.** That
+contract holds pooled USDC for in-flight CCTP-shaped messages (lock on
+Arc, mint on QRL). Draining it to a treasury while a QRL mint can still
+succeed would issue QRC-20 against missing Arc USDC (over-issuance).
+Stuck funds stay in TokenMinter: conserved, not returned, not stolen.
 
 If a mint is rejected because the recipient is sanctioned:
 
-- Arc USDC remains in the lockbox (see `testMintRejectedAfterLockConservesArcUsdc`)
+- Arc USDC remains in TokenMinter (see `testMintRejectedAfterLockConservesArcUsdc`)
 - QRC-20 is not minted
 - Retry mint stays blocked until council unsanctions
 - There is no timeout refund (that races a late mint)

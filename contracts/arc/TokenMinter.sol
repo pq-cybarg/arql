@@ -12,7 +12,7 @@ import {ComplianceRegistry} from "./ComplianceRegistry.sol";
 /// Arc must never deploy a wrapped USDC token. This contract holds native USDC.
 ///
 /// Owner and token controller are SLH-DSA public keys. An ECDSA `msg.sender`
-/// cannot re-point the messenger, relink tokens, or drain the lockbox.
+/// cannot re-point the messenger, relink tokens, or drain locked USDC.
 contract TokenMinter is PQCodeAnchor {
     enum TokenMode {
         Unset,

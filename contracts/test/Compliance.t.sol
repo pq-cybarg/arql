@@ -5,7 +5,7 @@ import {BridgeTest} from "./Bridge.t.sol";
 import {Bytes} from "../arc/lib/Bytes.sol";
 
 /// Sanctions gates must not break 1:1: a rejected mint leaves USDC in the
-/// lockbox, and the registry cannot drain that pool.
+/// TokenMinter, and the registry cannot drain that pool.
 contract ComplianceTest is BridgeTest {
     address carol = address(0xCA201);
 

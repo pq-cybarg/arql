@@ -16,7 +16,7 @@ contract ArqlBridge {
     mapping(bytes32 => bool) public usedNonces;
     mapping(address => bool) public sanctioned;
     /// Arc messenger||minter||transmitter seal. Zero means not yet pinned
-    /// (lockbox undeployed). Once set, inbound mint must carry this seal.
+    /// (Arc TokenMinter undeployed). Once set, inbound mint must carry this seal.
     bytes32 public expectedArcSeal;
 
     event MessageSent(uint256 amount, uint32 destinationDomain, address mintRecipient, address indexed from);

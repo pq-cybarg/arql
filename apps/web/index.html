@@ -157,8 +157,8 @@
           <ul>
             <li>Every lock, mint, unlock, and burn is screened before value moves.</li>
             <li>Compliance can add names and freezes. Removing a name needs owner and guardian.</li>
-            <li>The Arc lockbox is not drained to a treasury. Seizing pooled escrow while a mint can still succeed would issue QRL USDC against missing Arc USDC.</li>
-            <li>If mint is rejected because the recipient is flagged, Arc USDC stays in the lockbox. Retry stays blocked until the name is cleared.</li>
+            <li>Native USDC held in TokenMinter is not drained to a treasury. Seizing that pool while a mint can still succeed would issue QRL USDC against missing Arc USDC.</li>
+            <li>If mint is rejected because the recipient is flagged, Arc USDC stays in TokenMinter. Retry stays blocked until the name is cleared.</li>
             <li>Circle’s own USDC blacklist still applies on official Arc USDC. ARQL refuses earlier so we do not lock toward a name we will not mint to.</li>
           </ul>
         </article>
@@ -166,9 +166,10 @@
           <h3>What “burn” means here</h3>
           <p>
             On this rail, QRL USDC is only burned as part of <strong>Bridge to Arc</strong>
-            (<code>depositForBurn</code>). That is the return trip: QRL supply goes down so Arc
-            can unlock the same native USDC. There is no standalone destroy button. Burning
-            without an unlock would just throw test dollars away.
+            (<code>depositForBurn</code>). That is the return trip: QRL supply goes down so
+            TokenMinter can unlock the same native Circle USDC on Arc. There is no
+            standalone destroy button. Burning without an unlock would just throw test
+            dollars away.
           </p>
         </article>
       </div>
@@ -181,6 +182,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux7"></script>
+  <script type="module" src="./app.js?v=ux8"></script>
 </body>
 </html>

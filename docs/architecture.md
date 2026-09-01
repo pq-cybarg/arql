@@ -78,7 +78,7 @@ QRL → Arc (return)
 4. Relayer (or anyone, if `destinationCaller` is zero) submits
    `MessageTransmitter.receiveMessage(message, slhPk, slhSig)` on Arc. The
    precompile at `0x1800..0004` must return true.
-5. TokenMessenger unlocks **native** Circle USDC from the lockbox to the
+5. TokenMessenger unlocks **native** Circle USDC from TokenMinter to the
    mintRecipient. No wrapped USDC is created on Arc.
 
 A quantum-broken ECDSA key cannot: burn QRC-20 (QRVM rejects the tx), attest
@@ -110,7 +110,7 @@ ARQL does not pretend that is solved on Arc. The controlling verifier is
 4. Before mint or unlock, the receiver checks (a) local `extcodehash` values
    still match the pin (`codehash`) and (b) the inbound seal matches
    (`peer-seal`). A swapped Arc implementation cannot mint on QRL. A swapped
-   QRL implementation cannot drain the Arc lockbox.
+   QRL implementation cannot drain native USDC held in TokenMinter.
 5. Rotating a seal or pin requires owner **and** guardian SLH-DSA. ECDSA
    cannot do it. Relayer also recomputes `extcodehash` before attesting.
 
@@ -122,8 +122,8 @@ cannot mint on QRL unless QRVM's Dilithium owner also re-pins the new seal.
 
 Deposits, mints, unlocks, and burns refuse sanctioned or frozen accounts
 (`ComplianceRegistry` on Arc; owner-set lists on QRVM). Compliance SLH can
-add names; owner and guardian must both sign to remove one. The Arc lockbox
-is **not** drained for seizures: that would break 1:1 against in-flight
+add names; owner and guardian must both sign to remove one. Native USDC
+held in TokenMinter is **not** seized: that would break 1:1 against in-flight
 mints. See [compliance.md](compliance.md).
 
 ## Domains
@@ -131,6 +131,6 @@ mints. See [compliance.md](compliance.md).
 - Arc Testnet: **26** (Circle)
 - QRL 2.0 Testnet: **42424** (ARQL assignment, unofficial)
 
-When Circle lists QRL as a CCTP domain, retire the lockbox and point the
-messenger at Circle's TokenMessengerV2. The QRC-20 can then be abandoned in
-favor of native Circle USDC.
+When Circle lists QRL as a CCTP domain, stop locking in ARQL's TokenMinter
+and point the messenger at Circle's TokenMessengerV2. The QRC-20 can then be
+abandoned in favor of native Circle USDC.

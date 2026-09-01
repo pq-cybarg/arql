@@ -63,7 +63,7 @@ manager bytecode.
 - **Do not** lock Ethereum RLUSD in a third-party vault and mint a
   `RLUSD.e` on QRL. That is wrapped RLUSD, not RLUSD, and it fights
   Ripple’s NTT stance the same way wrapped USDC fights Arc’s CCTP stance.
-- **Do not** point ARQL’s USDC lockbox at RLUSD. ARQL’s Arc leg is
+- **Do not** point ARQL's TokenMinter USDC lock at RLUSD. ARQL's Arc leg is
   Circle-native USDC. Mixing issuers in one minter is a reserve lie.
 - **Do not** ship RLUSD on the 20-byte testnet and “upgrade” addresses
   in place. The reset is a network reset.

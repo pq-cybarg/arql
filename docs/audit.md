@@ -68,7 +68,7 @@ Round-trip lock/mint and burn/unlock hold under fuzz (256 runs).
 | Replay of a finalized message | `nonce` |
 | `vm.etch` of transmitter after `freezeLocal` | `codehash` on deposit |
 | `vm.etch` of minter after lock | `codehash` on unlock |
-| Wrong peer seal Arc or QRL | `peer-seal`; inventory stays in the lockbox / unminted |
+| Wrong peer seal Arc or QRL | `peer-seal`; inventory stays in TokenMinter / unminted |
 | Second TokenMessenger deploy of the same bytecode | distinct `localSeal` (address-bound) |
 | Rogue messenger toward QRL | `peer-seal` |
 | Zero amount | `amount` |

@@ -23,7 +23,7 @@
   "sealedBridge": "Q360b826e5290ae8ebb0b58318c12085cb37d9dd8",
   "sealedBridgeTx": "0x6310e5a8fe71608f3306672bec66082ec1527e1418597777cc41ea694589ddfb",
   "bridgeMintSealed": false,
-  "arcLockbox": null,
+  "arcTokenMinter": null,
   "arcChainId": 5042002,
   "arcDomain": 26,
   "qrlDomain": 42424,
@@ -41,7 +41,7 @@
   },
   "pinnedSource": {
     "contracts/qrl20/QRC20USDC.hyp": "0x13cc05f31b5911fa5841a705cb66dc62c4ab80cfcc06b0a8fb7221b8b7778527",
-    "contracts/qrl20/ArqlBridge.hyp": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257",
+    "contracts/qrl20/ArqlBridge.hyp": "0xce083e88932edb7094d6d670a2c4279abc32a89d21f0a31be57b99bc2392fd6b",
     "contracts/qrl20/ReportBoard.hyp": "0x72f9485ec5b3fb9bb527ff3c85e141bc58c6e4b90b13eb55069ca12e06356049",
     "contracts/qrl20/UsdcFaucet.hyp": "0x9d3c54eff0ab60882286342f117175982136c2b24509b92015255a9d9b9d7628",
     "live/code-watch.mjs": "0x9de21c71ed428ab68914cbafee69d4a0bbd1c1afc4a645fc545b745a2c092a75",

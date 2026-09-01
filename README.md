@@ -11,7 +11,7 @@ Addresses are mid-reset from 20 bytes (`Q` + 40 hex) to 64 bytes (`Q` + 128 hex)
 
 - Arc Solidity: lock native USDC; **SLH-DSA-SHA2-128s** attestation and admin (Arc precompile). ECDSA cannot move value or re-key the bridge.
 - **Warning:** Arc consensus is still elliptic-curve. Corrupted validators can swap bytecode at a known address. The fix is a QRVM-anchored **code seal** (addresses + `extcodehash`); QRL will not mint unless that seal matches the Dilithium-pinned value. See [docs/architecture.md](docs/architecture.md) and [docs/audit.md](docs/audit.md).
-- Sanctions: every lock/mint/unlock/burn is screened. OFAC-style lists are implementable via the compliance SLH key; the lockbox is not seizable (that would break 1:1). [docs/compliance.md](docs/compliance.md).
+- Sanctions: every lock/mint/unlock/burn is screened. OFAC-style lists are implementable via the compliance SLH key; native USDC in TokenMinter is not seizable (that would break 1:1). [docs/compliance.md](docs/compliance.md).
 - QRVM Hyperion (`.hyp`): mint/burn QRC-20 USDC, attester = Dilithium `msg.sender`
 - Iris-shaped API (`/v2/messages`, `/v2/attestations/:hash`)
 - Relayer (1 Arc confirmation)
