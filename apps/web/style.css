@@ -241,6 +241,8 @@ dd { margin: 0; word-break: break-all; text-align: right; font-size: 12px; }
 .disclose.warn p { color: var(--ink); }
 .disclose.warn strong { color: var(--qrl); }
 body.static-pages form[data-operator] { opacity: 0.55; pointer-events: none; }
+body.static-pages .board article:has(form[data-operator]),
+body.static-pages .board article:has(#sanc-check) { display: none; }
 .install { color: var(--mute); font-size: 12px; padding-left: 18px; margin: 0 0 14px; }
 .install li { margin: 6px 0; }
 #qrl-connect { width: 100%; margin-bottom: 8px; }

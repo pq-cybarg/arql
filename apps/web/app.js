@@ -7,6 +7,7 @@ import {
   shouldSkipLiveApi,
   walletRpcUrl,
 } from "./wallets.js";
+import { loadLiveInventory } from "./chain.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -72,8 +73,11 @@ function paint(s) {
   }
   paintCodeWatch(s);
   $("live-badge").textContent = s.codeWatch && !s.codeWatch.ok ? "CODE WRONG" : "QRVM live";
-  $("qrl-held").textContent = `${s.held} USDC`;
-  $("qrl-supply").textContent = `supply ${s.total} USDC · allowance ${s.allowance} · QRC-20`;
+  const pool = s.pool ?? s.faucetHeld ?? s.held;
+  $("qrl-held").textContent = `${pool} USDC`;
+  $("qrl-supply").textContent = s.faucetHeld != null
+    ? `faucet remaining ${s.faucetHeld} USDC · supply ${s.total} USDC`
+    : `supply ${s.total} USDC · allowance ${s.allowance} · QRC-20`;
   setA("qrl-contract", zondA(s.contract), s.contract);
   setA("qrl-holder", zondA(s.holder), s.holder);
   if (s.bridge) setA("qrl-bridge", zondA(s.bridge), s.bridge);
@@ -380,6 +384,19 @@ async function refresh() {
       minter: snap.minter || c.bridgeQ,
     };
   }
+  try {
+    const live = await loadLiveInventory(cfg);
+    s = {
+      ...s,
+      held: live.held ?? s.held,
+      faucetHeld: live.faucetHeld ?? s.faucetHeld,
+      pool: live.pool ?? s.pool,
+      qrl: live.qrl ?? s.qrl,
+      block: live.block ?? s.block,
+    };
+  } catch {
+    /* snapshot /api/state still paints */
+  }
   setStaticMode(staticMode);
   paint(s);
   return s;
@@ -520,11 +537,18 @@ $("add-token")?.addEventListener("click", async () => {
         },
       ],
     });
-    tape({ watchAsset: ok, token: toQ(cfg.usdcQ), symbol: "USDC", decimals: 6 });
+    tape({
+      watchAsset: ok,
+      token: toQ(cfg.usdcQ),
+      symbol: "USDC",
+      decimals: 6,
+      image: cfg.tokenImage,
+      hint: "This is a new contract, not a logo on the old one. Hide Q34ab8332… if it is still listed, then Add USDC again so the wallet stores https://pq-cybarg.github.io/arql/usdc.png.",
+    });
   } catch (err) {
     tape({
       error: err.message || String(err),
-      hint: "The wallet re-reads name/symbol/decimals from chain. RPC must be https://qrlwallet.com/api/qrl-rpc/testnet (not 209.250.255.226). Token Qadf94bb6e061a9f3b1d54826241eba701d43fb86 USDC 6.",
+      hint: "Import Qadf94bb6e061a9f3b1d54826241eba701d43fb86 (not Q34ab8332…). Hide the old row first; wallets keep the first icon they stored.",
     });
   }
 });

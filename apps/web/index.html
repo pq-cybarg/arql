@@ -33,9 +33,9 @@
         <p class="sub" id="user-qrl">Connect the QRL wallet to see your USDC and QRL.</p>
       </article>
       <article class="hero-q pool">
-        <p class="kicker">Bridge inventory</p>
+        <p class="kicker">Faucet remaining</p>
         <p class="big" id="qrl-held">—</p>
-        <p class="sub" id="qrl-supply">USDC held by the published token / faucet, not your account.</p>
+        <p class="sub" id="qrl-supply">USDC left in the on-chain drip contract, not your wallet.</p>
       </article>
     </section>
 
@@ -64,8 +64,8 @@
         <p id="faucet-status" class="hint">On-chain drip · 2 USDC / address / day · gas only</p>
         <p class="hint token-meta">
           <img id="token-icon" src="./usdc.png" alt="USDC" width="32" height="32" />
-          Import with the <strong>Q</strong> address (not 0x): <code id="token-q">Qadf94bb6e061a9f3b1d54826241eba701d43fb86</code>
-          · USD Coin · USDC · 6 decimals. Use Add USDC so the wallet gets this icon.
+          Live token (new contract): <code id="token-q">Qadf94bb6e061a9f3b1d54826241eba701d43fb86</code>
+          · USD Coin · USDC · 6 decimals. The icon is not on-chain. If the wallet still shows a generic coin, you imported this address before the PNG was passed in, or you still have the old contract <code>Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9</code>. Hide that row, then Add USDC again.
         </p>
       </li>
       <li class="panel">
@@ -202,6 +202,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux20"></script>
+  <script type="module" src="./app.js?v=ux21"></script>
 </body>
 </html>
