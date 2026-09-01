@@ -55,7 +55,11 @@
         <button type="button" id="add-token">Add USDC to QRL wallet</button>
         <button type="button" id="faucet-arc">Open Circle Arc faucet</button>
         <p id="faucet-status" class="hint">On-chain drip · 2 USDC / address / day · gas only</p>
-        <p class="hint">Import in the wallet with the <strong>Q</strong> address (not 0x): <code id="token-q">Qadf94bb6e061a9f3b1d54826241eba701d43fb86</code> · USD Coin · USDC · 6 decimals. Or click Add USDC to QRL wallet.</p>
+        <p class="hint token-meta">
+          <img id="token-icon" src="./usdc.png" alt="USDC" width="32" height="32" />
+          Import with the <strong>Q</strong> address (not 0x): <code id="token-q">Qadf94bb6e061a9f3b1d54826241eba701d43fb86</code>
+          · USD Coin · USDC · 6 decimals. Use Add USDC so the wallet gets this icon.
+        </p>
       </li>
       <li class="panel">
         <h2>3. Send on QRL</h2>
@@ -191,6 +195,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux14"></script>
+  <script type="module" src="./app.js?v=ux15"></script>
 </body>
 </html>

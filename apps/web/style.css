@@ -265,6 +265,8 @@ input, select {
 }
 .hint { color: var(--mute); }
 .hint.warn-rpc { color: var(--copper); border: 1px solid var(--line); padding: 10px; }
+.token-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#token-icon { border-radius: 50%; vertical-align: middle; }
 .actions { display: flex; gap: 8px; margin-top: 16px; }
 button {
   font-family: Syne, sans-serif;

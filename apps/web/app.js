@@ -461,7 +461,7 @@ $("add-token")?.addEventListener("click", async () => {
           address: toQ(cfg.usdcQ),
           symbol: "USDC",
           decimals: 6,
-          image: "",
+          image: cfg.tokenImage || new URL("./usdc.png", location.href).href,
         },
       },
     });

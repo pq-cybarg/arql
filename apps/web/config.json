@@ -18,6 +18,7 @@
   "decimals": 6,
   "symbol": "USDC",
   "name": "USD Coin",
+  "tokenImage": "https://pq-cybarg.github.io/arql/usdc.png",
   "deployTx": "0xede10f2d20290d01f8588e22348a452bd83de18c2b7a5d6b90d1f5f3684476fa",
   "mintTx": "0xc3e6b05f8f8fa1824c39819df0cb0e4879e085421e5da65571c1a51b98e429db",
   "bridgeTx": "0x21aa847defe96668eb77249151056e22a01bc9d26282fbc925a512a0bd9a85e5",
