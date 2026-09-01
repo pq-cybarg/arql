@@ -95,8 +95,17 @@ function paintCodeWatch(s) {
   if (list) {
     list.innerHTML = watch.alarms
       .map((a) => {
-        const why = a.reason === "empty-code" ? "no code at address" : a.reason === "hash-mismatch" ? "bytecode hash mismatch" : a.reason;
-        return `<li><strong>${a.name}</strong> ${a.address || ""} — ${why}<br>expected ${a.expected || "—"}<br>live ${a.live || "—"}</li>`;
+        const why =
+          {
+            "empty-code": "no code at this address",
+            "live-vs-pin": "live bytecode is not the pinned hash (on-chain swap)",
+            "live-vs-build": "live bytecode is not this repo's published build (GitHub/source edit or stale deploy)",
+            "pin-vs-build": "pinned hash does not match the published build (config or repo edited)",
+            "source-changed": "Hyperion source in this repo no longer matches the pinned source hash",
+            unpinned: "no pin and no build artifact",
+            "rpc-failed": "could not read chain",
+          }[a.reason] || a.reason;
+        return `<li><strong>${a.name}</strong> ${a.address || ""} — ${why}<br>pin ${a.pin || "—"}<br>build ${a.build || "—"}<br>live ${a.live || "—"}</li>`;
       })
       .join("");
   }
