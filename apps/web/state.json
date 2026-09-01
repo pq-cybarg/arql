@@ -11,7 +11,7 @@
   "held": 1030,
   "allowance": 0,
   "qrl": 9.98934661747017,
-  "block": 220529,
+  "block": 220534,
   "deployTx": "0x845902c24c9c9e85def6be6988da2703a8333ca147dc7bb0581ede1df6403b87",
   "mintTx": "0x0e8b64f7bd7442c5bf157d85fb3ccf2f7db5aa856ba03774bd33aecdede5e832",
   "bridgeTx": "0x21aa847defe96668eb77249151056e22a01bc9d26282fbc925a512a0bd9a85e5",
@@ -23,5 +23,39 @@
     "count": 0,
     "items": []
   },
-  "snappedAt": "2026-09-01T03:57:53.271Z"
+  "codeWatch": {
+    "ok": true,
+    "alarms": [],
+    "checks": [
+      {
+        "name": "QRC-20 USDC",
+        "address": "Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
+        "expected": "0x65915713e04e1eda13dc68db03617b8d279bcf8c283148ad0fe294577c808ff1",
+        "live": "0x65915713e04e1eda13dc68db03617b8d279bcf8c283148ad0fe294577c808ff1",
+        "ok": true
+      },
+      {
+        "name": "bridge (minter)",
+        "address": "Q89b8cdf9bddba27ac48938bd82d99f33796bcc05",
+        "expected": "0xc58f02878c08b6f9a4313d28781669e366132f3f8e76337fa625760a5aae26d7",
+        "live": "0xc58f02878c08b6f9a4313d28781669e366132f3f8e76337fa625760a5aae26d7",
+        "ok": true
+      },
+      {
+        "name": "sealed bridge",
+        "address": "Q360b826e5290ae8ebb0b58318c12085cb37d9dd8",
+        "expected": "0x42f972509d29d43b6262681ed30eb7394619ef02dceda30cb0468166394ea839",
+        "live": "0x42f972509d29d43b6262681ed30eb7394619ef02dceda30cb0468166394ea839",
+        "ok": true
+      },
+      {
+        "name": "report board",
+        "address": "Q65d6920586217699ce43e1f5c2e970c10c1726a9",
+        "expected": "0x40bc84e3eed68b36a2ba28d4e394fed8ac7e199b5d06fd94d176246586febc0f",
+        "live": "0x40bc84e3eed68b36a2ba28d4e394fed8ac7e199b5d06fd94d176246586febc0f",
+        "ok": true
+      }
+    ]
+  },
+  "snappedAt": "2026-09-01T04:02:48.142Z"
 }

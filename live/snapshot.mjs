@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { qrlRpc, toQ } from "./rpc.mjs";
 import { loadReports } from "./reports-read.mjs";
+import { watchOnChainCode } from "./code-watch.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "apps/web/config.json"), "utf8"));
@@ -47,6 +48,7 @@ const state = {
   sealedBridge: cfg.sealedBridge || null,
   reportBoard: cfg.reportBoardQ || null,
   reports: cfg.reportBoardQ ? await loadReports(cfg.reportBoardQ) : { count: 0, items: [] },
+  codeWatch: await watchOnChainCode(cfg),
   snappedAt: new Date().toISOString(),
 };
 const out = path.join(root, "apps/web/state.json");

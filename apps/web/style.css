@@ -28,6 +28,40 @@ body {
   z-index: 0;
 }
 
+.code-siren {
+  position: relative;
+  z-index: 5;
+  margin: 0;
+  padding: 28px 24px 32px;
+  background: #8a1a12;
+  color: #fff4e8;
+  border-bottom: 8px solid #ffb020;
+  animation: siren 1.1s steps(2, end) infinite;
+}
+.code-siren[hidden] { display: none; }
+.siren-kicker {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.siren-title {
+  font-family: Syne, sans-serif;
+  font-size: clamp(28px, 6vw, 52px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin: 8px 0 16px;
+}
+#code-siren-list { margin: 0; padding-left: 20px; font-size: 13px; }
+#code-siren-list li { margin: 8px 0; }
+body.code-wrong { background: #140608; }
+body.code-wrong .live { background: #8a1a12; color: #fff4e8; }
+@keyframes siren {
+  0%, 49% { filter: none; }
+  50%, 100% { filter: brightness(1.25); }
+}
 .mast, main { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 .mast { padding-top: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--line); }
 .mark-row { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }

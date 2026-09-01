@@ -33,6 +33,7 @@ const packed = {
   standard: "QRC-20",
   abi: art.abi,
   bytecode: "0x" + art.zvm.bytecode.object,
+  deployedBytecode: "0x" + (art.zvm.deployedBytecode?.object || art.zvm.bytecode.object),
 };
 fs.writeFileSync(path.join(outDir, "QRC20USDC.json"), JSON.stringify(packed, null, 2));
 console.log("compiled QRC20USDC", packed.bytecode.length, "bytes hex");

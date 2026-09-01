@@ -51,7 +51,8 @@ function paint(s) {
     $("live-badge").textContent = "offline";
     return;
   }
-  $("live-badge").textContent = "QRVM live";
+  paintCodeWatch(s);
+  $("live-badge").textContent = s.codeWatch && !s.codeWatch.ok ? "CODE WRONG" : "QRVM live";
   $("qrl-held").textContent = `${s.held} USDC`;
   $("qrl-supply").textContent = `supply ${s.total} USDC · allowance ${s.allowance} · QRC-20`;
   setA("qrl-contract", zondA(s.contract), s.contract);
@@ -75,6 +76,29 @@ function paint(s) {
   if ($("faucet-status") && s.faucet) {
     $("faucet-status").textContent =
       `${s.faucet.remainingToday} USDC left today · ${s.faucet.perAccount} per address · day cap ${s.faucet.dailyTotal}`;
+  }
+}
+
+function paintCodeWatch(s) {
+  const siren = $("code-siren");
+  const list = $("code-siren-list");
+  const watch = s.codeWatch;
+  const bad = watch && watch.ok === false && (watch.alarms || []).length;
+  document.body.classList.toggle("code-wrong", !!bad);
+  if (!siren) return;
+  if (!bad) {
+    siren.hidden = true;
+    if (list) list.innerHTML = "";
+    return;
+  }
+  siren.hidden = false;
+  if (list) {
+    list.innerHTML = watch.alarms
+      .map((a) => {
+        const why = a.reason === "empty-code" ? "no code at address" : a.reason === "hash-mismatch" ? "bytecode hash mismatch" : a.reason;
+        return `<li><strong>${a.name}</strong> ${a.address || ""} — ${why}<br>expected ${a.expected || "—"}<br>live ${a.live || "—"}</li>`;
+      })
+      .join("");
   }
 }
 

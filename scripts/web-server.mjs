@@ -7,6 +7,7 @@ import { getWeb3, loadMeta, loadAbis, send, units, toQ } from "../live/operator.
 import { qrlRpc } from "../live/rpc.mjs";
 import { faucetCheck, faucetCommit, faucetStatus } from "./faucet-lib.mjs";
 import { loadReports } from "../live/reports-read.mjs";
+import { watchOnChainCode } from "../live/code-watch.mjs";
 import { isSanctioned, setSanctioned, requireClear } from "./sanctions-lib.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../apps/web");
@@ -97,6 +98,7 @@ async function state() {
     reportBoard: live.reportBoardQ || null,
     reportMinFee: live.reportMinFee || "10000000000000000",
     reports: live.reportBoardQ ? await loadReports(live.reportBoardQ) : { count: 0, items: [] },
+    codeWatch: await watchOnChainCode(live),
   };
 }
 
