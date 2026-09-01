@@ -259,14 +259,14 @@ $("qrl-connect").addEventListener("click", async () => {
     qrlProvider = pickQrlProvider();
     if (!qrlProvider) {
       $("qrl-account").innerHTML =
-        'No QRL 2.0 wallet found. Install from the <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">official release</a>, then reload this page.';
+        'No QRL 2.0 wallet found. Install the official <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">QRL Web3 Wallet</a>, then reload this page.';
       return;
     }
-    await ensureQrlHttpsRpc();
     const acc = await qrlRequest("qrl_requestAccounts");
     qrlAccount = Array.isArray(acc) ? acc[0] : acc;
     $("qrl-account").textContent = toQ(qrlAccount) || "connected";
     tape({ connected: toQ(qrlAccount) });
+    ensureQrlHttpsRpc().catch(() => {});
   } catch (err) {
     const msg = err.message || String(err);
     const stale = /extension context invalidated/i.test(msg);

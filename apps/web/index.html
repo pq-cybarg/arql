@@ -92,10 +92,9 @@
         <h2>Wallets</h2>
         <p class="vm">QRL 2.0 Web3 Wallet (EIP-6963) for QRC-20. Arc EVM wallet for the lockbox when it exists.</p>
         <ol class="install">
-          <li>Open the official <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">QRL Web3 Wallet release</a>.</li>
-          <li>Download the Chrome zip, unzip it.</li>
-          <li>Go to <code>chrome://extensions</code>, enable Developer mode, Load unpacked, pick that folder.</li>
-          <li>Create or import a Testnet V2 account. Set the network RPC to <code>https://qrlwallet.com/api/qrl-rpc/testnet</code> (HTTPS). A local <code>http://…:8545</code> node will fail.</li>
+          <li>Install the official <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">QRL Web3 Wallet</a> (Chrome zip → Load unpacked). Do not patch it.</li>
+          <li>Unlock it, pick Testnet V2, then Connect here. The desk only calls <code>qrl_requestAccounts</code> / <code>qrl_sendTransaction</code>.</li>
+          <li>If the wallet cannot reach the chain, use its own Add/Edit chain UI and set RPC to <code>https://qrlwallet.com/api/qrl-rpc/testnet</code>.</li>
         </ol>
         <button type="button" id="qrl-connect">Connect QRL 2.0 wallet</button>
         <p id="qrl-account" class="hint">Not connected</p>
@@ -181,6 +180,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=wallet5"></script>
+  <script type="module" src="./app.js?v=wallet6"></script>
 </body>
 </html>
