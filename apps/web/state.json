@@ -11,7 +11,7 @@
   "held": 930,
   "allowance": 0,
   "qrl": 9.987368884964633,
-  "block": 220599,
+  "block": 221130,
   "deployTx": "0x845902c24c9c9e85def6be6988da2703a8333ca147dc7bb0581ede1df6403b87",
   "mintTx": "0x0e8b64f7bd7442c5bf157d85fb3ccf2f7db5aa856ba03774bd33aecdede5e832",
   "bridgeTx": "0x21aa847defe96668eb77249151056e22a01bc9d26282fbc925a512a0bd9a85e5",
@@ -24,81 +24,14 @@
     "items": []
   },
   "codeWatch": {
-    "ok": false,
-    "alarms": [
-      {
-        "name": "QRC-20 USDC",
-        "address": "Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
-        "pin": "0x65915713e04e1eda13dc68db03617b8d279bcf8c283148ad0fe294577c808ff1",
-        "build": "0x38a5f691be154140a0d2b0fbc12f1a3393f2e707a96fa48621c83942803e47f8",
-        "live": "0x65915713e04e1eda13dc68db03617b8d279bcf8c283148ad0fe294577c808ff1",
-        "source": "0x13cc05f31b5911fa5841a705cb66dc62c4ab80cfcc06b0a8fb7221b8b7778527",
-        "sourcePin": "0x13cc05f31b5911fa5841a705cb66dc62c4ab80cfcc06b0a8fb7221b8b7778527",
-        "ok": false,
-        "reason": "live-vs-build"
-      },
-      {
-        "name": "QRC-20 USDC",
-        "address": "Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
-        "pin": "0x65915713e04e1eda13dc68db03617b8d279bcf8c283148ad0fe294577c808ff1",
-        "build": "0x38a5f691be154140a0d2b0fbc12f1a3393f2e707a96fa48621c83942803e47f8",
-        "live": "0x65915713e04e1eda13dc68db03617b8d279bcf8c283148ad0fe294577c808ff1",
-        "source": "0x13cc05f31b5911fa5841a705cb66dc62c4ab80cfcc06b0a8fb7221b8b7778527",
-        "sourcePin": "0x13cc05f31b5911fa5841a705cb66dc62c4ab80cfcc06b0a8fb7221b8b7778527",
-        "ok": false,
-        "reason": "pin-vs-build"
-      },
-      {
-        "name": "bridge (minter)",
-        "address": "Q89b8cdf9bddba27ac48938bd82d99f33796bcc05",
-        "pin": "0xc58f02878c08b6f9a4313d28781669e366132f3f8e76337fa625760a5aae26d7",
-        "build": "0xbfc740bdc3667153d04097cf216db5640f4357c3a02ecd3df9061c4964ff11f9",
-        "live": "0xc58f02878c08b6f9a4313d28781669e366132f3f8e76337fa625760a5aae26d7",
-        "source": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257",
-        "sourcePin": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257",
-        "ok": false,
-        "reason": "live-vs-build"
-      },
-      {
-        "name": "bridge (minter)",
-        "address": "Q89b8cdf9bddba27ac48938bd82d99f33796bcc05",
-        "pin": "0xc58f02878c08b6f9a4313d28781669e366132f3f8e76337fa625760a5aae26d7",
-        "build": "0xbfc740bdc3667153d04097cf216db5640f4357c3a02ecd3df9061c4964ff11f9",
-        "live": "0xc58f02878c08b6f9a4313d28781669e366132f3f8e76337fa625760a5aae26d7",
-        "source": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257",
-        "sourcePin": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257",
-        "ok": false,
-        "reason": "pin-vs-build"
-      },
-      {
-        "name": "sealed bridge",
-        "address": "Q360b826e5290ae8ebb0b58318c12085cb37d9dd8",
-        "pin": "0x42f972509d29d43b6262681ed30eb7394619ef02dceda30cb0468166394ea839",
-        "build": "0xbfc740bdc3667153d04097cf216db5640f4357c3a02ecd3df9061c4964ff11f9",
-        "live": "0x42f972509d29d43b6262681ed30eb7394619ef02dceda30cb0468166394ea839",
-        "source": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257",
-        "sourcePin": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257",
-        "ok": false,
-        "reason": "live-vs-build"
-      },
-      {
-        "name": "sealed bridge",
-        "address": "Q360b826e5290ae8ebb0b58318c12085cb37d9dd8",
-        "pin": "0x42f972509d29d43b6262681ed30eb7394619ef02dceda30cb0468166394ea839",
-        "build": "0xbfc740bdc3667153d04097cf216db5640f4357c3a02ecd3df9061c4964ff11f9",
-        "live": "0x42f972509d29d43b6262681ed30eb7394619ef02dceda30cb0468166394ea839",
-        "source": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257",
-        "sourcePin": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257",
-        "ok": false,
-        "reason": "pin-vs-build"
-      }
-    ],
+    "ok": true,
+    "alarms": [],
     "checks": [
       {
         "name": "QRC-20 USDC",
         "address": "Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
         "pin": "0x65915713e04e1eda13dc68db03617b8d279bcf8c283148ad0fe294577c808ff1",
-        "build": "0x38a5f691be154140a0d2b0fbc12f1a3393f2e707a96fa48621c83942803e47f8",
+        "build": "0x65915713e04e1eda13dc68db03617b8d279bcf8c283148ad0fe294577c808ff1",
         "live": "0x65915713e04e1eda13dc68db03617b8d279bcf8c283148ad0fe294577c808ff1",
         "source": "0x13cc05f31b5911fa5841a705cb66dc62c4ab80cfcc06b0a8fb7221b8b7778527",
         "sourcePin": "0x13cc05f31b5911fa5841a705cb66dc62c4ab80cfcc06b0a8fb7221b8b7778527"
@@ -107,19 +40,19 @@
         "name": "bridge (minter)",
         "address": "Q89b8cdf9bddba27ac48938bd82d99f33796bcc05",
         "pin": "0xc58f02878c08b6f9a4313d28781669e366132f3f8e76337fa625760a5aae26d7",
-        "build": "0xbfc740bdc3667153d04097cf216db5640f4357c3a02ecd3df9061c4964ff11f9",
+        "build": "0xc58f02878c08b6f9a4313d28781669e366132f3f8e76337fa625760a5aae26d7",
         "live": "0xc58f02878c08b6f9a4313d28781669e366132f3f8e76337fa625760a5aae26d7",
-        "source": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257",
-        "sourcePin": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257"
+        "source": "0xce083e88932edb7094d6d670a2c4279abc32a89d21f0a31be57b99bc2392fd6b",
+        "sourcePin": "0xce083e88932edb7094d6d670a2c4279abc32a89d21f0a31be57b99bc2392fd6b"
       },
       {
         "name": "sealed bridge",
         "address": "Q360b826e5290ae8ebb0b58318c12085cb37d9dd8",
         "pin": "0x42f972509d29d43b6262681ed30eb7394619ef02dceda30cb0468166394ea839",
-        "build": "0xbfc740bdc3667153d04097cf216db5640f4357c3a02ecd3df9061c4964ff11f9",
+        "build": "0x42f972509d29d43b6262681ed30eb7394619ef02dceda30cb0468166394ea839",
         "live": "0x42f972509d29d43b6262681ed30eb7394619ef02dceda30cb0468166394ea839",
-        "source": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257",
-        "sourcePin": "0xcc14c3a7fa34498db62c5f8884679e1c26a1b409710d7c4f8a09e55ccb3b5257"
+        "source": "0xce083e88932edb7094d6d670a2c4279abc32a89d21f0a31be57b99bc2392fd6b",
+        "sourcePin": "0xce083e88932edb7094d6d670a2c4279abc32a89d21f0a31be57b99bc2392fd6b"
       },
       {
         "name": "report board",
@@ -141,5 +74,5 @@
       }
     ]
   },
-  "snappedAt": "2026-09-01T05:07:40.196Z"
+  "snappedAt": "2026-09-01T13:58:43.203Z"
 }

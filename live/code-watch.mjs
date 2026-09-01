@@ -21,10 +21,10 @@ function artifactHash(file) {
   return keccak256(hex);
 }
 
-function pinFor(cfg, address) {
+function lookup(map, address) {
+  if (!map) return null;
   const q = toQ(address);
-  const pins = cfg.pinnedCodehash || {};
-  return pins[q] || pins[q.toLowerCase()] || null;
+  return map[q] || map[q.toLowerCase()] || null;
 }
 
 function alarm(row, reason) {
@@ -48,8 +48,8 @@ export async function watchOnChainCode(cfg = {}) {
   const sourcePins = cfg.pinnedSource || {};
 
   for (const job of jobs) {
-    const pin = pinFor(cfg, job.address);
-    const build = artifactHash(job.artifact);
+    const pin = lookup(cfg.pinnedCodehash, job.address);
+    const build = lookup(cfg.pinnedBuild, job.address) || artifactHash(job.artifact);
     const source = fileHash(job.source);
     const sourcePin = sourcePins[job.source];
     let liveCode = "0x";
