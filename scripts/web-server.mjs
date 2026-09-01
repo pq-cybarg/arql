@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { getWeb3, loadMeta, loadAbis, send, units, toQ } from "../live/operator.mjs";
 import { qrlRpc } from "../live/rpc.mjs";
 import { faucetCheck, faucetCommit, faucetStatus } from "./faucet-lib.mjs";
+import { isSanctioned, setSanctioned, requireClear } from "./sanctions-lib.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../apps/web");
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -103,6 +104,16 @@ async function encodeAndSend(action, body) {
   const bridge = live.bridgeQ && abis.bridge ? new web3.qrl.Contract(abis.bridge.abi, live.bridgeQ) : null;
   const toAddr = body.to ? toQ(body.to) : acc.address;
   const amt = body.amount != null && body.amount !== "" ? units(body.amount) : 0n;
+  if (action === "sanctionCheck") {
+    return { account: toAddr, blocked: isSanctioned(toAddr) };
+  }
+  if (action === "sanctionSet") {
+    return setSanctioned(toAddr, !!body.on);
+  }
+  if (["faucet", "mint", "receiveMint", "transfer"].includes(action)) {
+    requireClear(toAddr);
+    if (body.from) requireClear(body.from);
+  }
 
   if (action === "transfer") {
     if (amt <= 0n) throw new Error("amount");

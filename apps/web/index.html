@@ -53,7 +53,7 @@
       </li>
       <li class="panel">
         <h2>4. Bridge to Arc</h2>
-        <p class="vm">Burns QRL USDC and prepares the Arc unlock. Approve the bridge once, then burn.</p>
+        <p class="vm">This is the return trip. It burns your QRL USDC and asks Arc to unlock the same native USDC. A standalone burn (under More tools) only destroys tokens and does not pay anyone on Arc.</p>
         <form data-action="approve">
           <input type="hidden" name="spender" id="approve-spender" />
           <label>Approve amount <input name="amount" value="1000" inputmode="decimal" /></label>
@@ -72,10 +72,11 @@
       <summary>More tools</summary>
       <div class="board">
         <article class="panel">
-          <h2>Burn QRL USDC</h2>
+          <h2>Destroy QRL USDC</h2>
+          <p class="vm">Calls <code>burn</code> on the token only. Supply goes down. Nothing is unlocked on Arc. Use step 4 to bridge.</p>
           <form data-action="burn">
             <label>Amount <input name="amount" value="1" inputmode="decimal" /></label>
-            <button type="submit">Burn</button>
+            <button type="submit">Destroy (no Arc unlock)</button>
           </form>
         </article>
         <article class="panel">
@@ -92,6 +93,15 @@
             <label>Arc seal <input name="arcSeal" placeholder="0x…" /></label>
             <button type="submit">Receive from Arc</button>
           </form>
+        </article>
+        <article class="panel">
+          <h2>Sanctions demo</h2>
+          <p class="vm">Flag an address. Faucet and operator mint then refuse it. On-chain, the Arc registry and QRL lists screen depositor, recipient, unlock, and burn before value moves. Unlisting takes owner + guardian.</p>
+          <label>Address <input id="sanc-addr" placeholder="Q… or 0x…" /></label>
+          <button type="button" id="sanc-check">Check</button>
+          <button type="button" id="sanc-block" data-operator="1">Flag (operator)</button>
+          <button type="button" id="sanc-clear" data-operator="1">Clear (operator)</button>
+          <p id="sanc-out" class="hint">Not checked</p>
         </article>
         <article class="panel">
           <h2>Contracts</h2>
@@ -136,6 +146,23 @@
             <li>This public page does not hold keys.</li>
           </ul>
         </article>
+        <article class="disclose">
+          <h3>Sanctions</h3>
+          <ul>
+            <li>Every lock, mint, unlock, and burn is screened before value moves.</li>
+            <li>Compliance can add names and freezes. Removing a name needs owner and guardian.</li>
+            <li>The Arc lockbox is not drained to a treasury. Seizing pooled escrow while a mint can still succeed would issue QRL USDC against missing Arc USDC.</li>
+            <li>If mint is rejected because the recipient is flagged, Arc USDC stays in the lockbox. Retry stays blocked until the name is cleared.</li>
+            <li>Circle’s own USDC blacklist still applies on official Arc USDC. ARQL refuses earlier so we do not lock toward a name we will not mint to.</li>
+          </ul>
+        </article>
+        <article class="disclose">
+          <h3>What burn does</h3>
+          <ul>
+            <li><strong>Bridge to Arc</strong> burns QRL USDC as the CCTP-shaped <code>depositForBurn</code>. That is how you cash out to native Arc USDC (once the Arc lockbox is live).</li>
+            <li><strong>Destroy</strong> (More tools) only reduces QRL supply. It does not create an unlock on Arc. Do not use it if you want your dollars back.</li>
+          </ul>
+        </article>
       </div>
     </details>
 
@@ -146,6 +173,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux1"></script>
+  <script type="module" src="./app.js?v=ux2"></script>
 </body>
 </html>

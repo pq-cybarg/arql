@@ -270,6 +270,21 @@ async function claimFaucet(rail) {
   setTimeout(refresh, 4000);
 }
 
+async function sanc(action, on) {
+  const to = $("sanc-addr")?.value;
+  if (staticMode) {
+    $("sanc-out").textContent = "Sanctions demo runs on the local desk.";
+    return;
+  }
+  const out = await apiQrl(action, { to, on });
+  $("sanc-out").textContent = JSON.stringify(out);
+  tape(out);
+}
+
+$("sanc-check")?.addEventListener("click", () => sanc("sanctionCheck"));
+$("sanc-block")?.addEventListener("click", () => sanc("sanctionSet", true));
+$("sanc-clear")?.addEventListener("click", () => sanc("sanctionSet", false));
+
 $("faucet-qrl")?.addEventListener("click", () => claimFaucet("qrl"));
 $("faucet-arc")?.addEventListener("click", () => claimFaucet("arc"));
 
