@@ -25,10 +25,17 @@
   </header>
 
   <main>
-    <section class="hero-q">
-      <p class="kicker">Your QRL test USDC</p>
-      <p class="big" id="qrl-held">—</p>
-      <p class="sub" id="qrl-supply">Connect a wallet to see your balance.</p>
+    <section class="balances">
+      <article class="hero-q">
+        <p class="kicker">Your wallet</p>
+        <p class="big" id="user-usdc">—</p>
+        <p class="sub" id="user-qrl">Connect the QRL wallet to see your USDC and QRL.</p>
+      </article>
+      <article class="hero-q pool">
+        <p class="kicker">Bridge inventory</p>
+        <p class="big" id="qrl-held">—</p>
+        <p class="sub" id="qrl-supply">USDC held by the published token / faucet, not your account.</p>
+      </article>
     </section>
 
     <ol class="steps">
@@ -182,6 +189,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux10"></script>
+  <script type="module" src="./app.js?v=ux11"></script>
 </body>
 </html>

@@ -81,8 +81,14 @@ body.code-wrong .live { background: #8a1a12; color: #fff4e8; }
   padding: 4px 10px;
   margin-bottom: 10px;
 }
-.hero-q {
+.balances {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
   margin: 36px 0;
+}
+.hero-q {
+  margin: 0;
   padding: 28px 24px;
   border: 1px solid var(--line);
   box-shadow: inset 4px 0 0 var(--qrl);
@@ -240,7 +246,7 @@ body.static-pages form[data-operator] { opacity: 0.55; pointer-events: none; }
 #qrl-connect { width: 100%; margin-bottom: 8px; }
 
 @media (max-width: 980px) {
-  .disclose-grid, .steps { grid-template-columns: 1fr; }
+  .disclose-grid, .steps, .balances { grid-template-columns: 1fr; }
 }
 .panel button { width: 100%; margin-top: 10px; }
 .panel button:disabled { opacity: 0.5; }

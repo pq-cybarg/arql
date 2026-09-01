@@ -113,6 +113,52 @@ function paintCodeWatch(s) {
   }
 }
 
+function fmtUnits(hex, decimals) {
+  try {
+    const n = BigInt(hex || "0");
+    const d = 10n ** BigInt(decimals);
+    const w = n / d;
+    let f = (n % d).toString().padStart(decimals, "0").replace(/0+$/, "");
+    return f ? `${w}.${f}` : `${w}`;
+  } catch {
+    return "—";
+  }
+}
+
+function paintUser(u) {
+  if (!$("user-usdc")) return;
+  if (!u) {
+    $("user-usdc").textContent = "—";
+    $("user-qrl").textContent = "Connect the QRL wallet to see your USDC and QRL.";
+    return;
+  }
+  $("user-usdc").textContent = `${u.usdc} USDC`;
+  $("user-qrl").textContent = `${u.qrl} QRL · ${u.account}`;
+}
+
+async function pollUser() {
+  if (!qrlAccount || !qrlProvider) {
+    paintUser(null);
+    return;
+  }
+  try {
+    if (!cfg.usdcQ) cfg = await loadConfig().catch(() => cfg);
+    const acc = toQ(qrlAccount);
+    const pad = acc.slice(1).toLowerCase().padStart(64, "0");
+    const [qrlBal, usdcBal] = await Promise.all([
+      qrlRequest("qrl_getBalance", [acc, "latest"]),
+      qrlRequest("qrl_call", [{ to: toQ(cfg.usdcQ), data: "0x70a08231" + pad }, "latest"]),
+    ]);
+    paintUser({
+      account: acc,
+      qrl: fmtUnits(qrlBal, 18),
+      usdc: fmtUnits(usdcBal, 6),
+    });
+  } catch (err) {
+    if ($("user-qrl")) $("user-qrl").textContent = err.message || "could not read balances";
+  }
+}
+
 function tape(obj) {
   $("tape-body").textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
 }
@@ -343,7 +389,10 @@ async function claimFaucet(rail) {
     if (!faucet) throw new Error("on-chain faucet not deployed");
     const out = await walletSend(faucet, "0x9f678cca");
     tape({ drip: out, faucet });
-    setTimeout(refresh, 5000);
+    setTimeout(() => {
+      refresh();
+      pollUser();
+    }, 5000);
     return;
   }
   const circle = cfg.circleFaucet || "https://faucet.circle.com/";
@@ -413,6 +462,7 @@ $("qrl-connect").addEventListener("click", async () => {
     qrlAccount = Array.isArray(acc) ? acc[0] : acc;
     $("qrl-account").textContent = toQ(qrlAccount) || "connected";
     tape({ connected: toQ(qrlAccount) });
+    pollUser();
     ensureQrlHttpsRpc().catch(() => {});
   } catch (err) {
     const msg = err.message || String(err);
@@ -449,4 +499,6 @@ setTimeout(() => {
   if (pickQrlProvider()) $("qrl-account").textContent = "QRL 2.0 wallet detected — click Connect";
 }, 400);
 await refresh();
+pollUser();
 setInterval(refresh, 12000);
+setInterval(pollUser, 5000);
