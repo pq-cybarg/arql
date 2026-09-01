@@ -137,26 +137,28 @@ function paintUser(u) {
 }
 
 async function pollUser() {
-  if (!qrlAccount || !qrlProvider) {
+  if (!qrlAccount) {
     paintUser(null);
     return;
   }
   try {
     if (!cfg.usdcQ) cfg = await loadConfig().catch(() => cfg);
     const acc = toQ(qrlAccount);
-    const pad = acc.slice(1).toLowerCase().padStart(64, "0");
-    const [qrlBal, usdcBal] = await Promise.all([
-      qrlRequest("qrl_getBalance", [acc, "latest"]),
-      qrlRequest("qrl_call", [{ to: toQ(cfg.usdcQ), data: "0x70a08231" + pad }, "latest"]),
+    const [info, tokens] = await Promise.all([
+      fetch(`https://zondscan.com/api/address/${acc}`).then((r) => r.json()),
+      fetch(`https://zondscan.com/api/address/${acc}/tokens`).then((r) => r.json()),
     ]);
+    const qrl = info?.address?.balance ?? info?.balance;
+    const want = toQ(cfg.usdcQ).toLowerCase();
+    const tok = (tokens?.tokens || []).find((t) => toQ(t.contractAddress).toLowerCase() === want);
+    const raw = tok?.balance ?? "0";
     paintUser({
       account: acc,
-      qrl: fmtUnits(qrlBal, 18),
-      usdc: fmtUnits(usdcBal, 6),
+      qrl: qrl == null ? "—" : String(qrl),
+      usdc: fmtUnits(raw.startsWith("0x") ? raw : BigInt(raw).toString(), tok?.decimals ?? 6),
     });
   } catch (err) {
-    const e = rpcFail(err);
-    if ($("user-qrl")) $("user-qrl").textContent = e.message;
+    if ($("user-qrl")) $("user-qrl").textContent = err.message || "could not read balances";
   }
 }
 
@@ -220,13 +222,10 @@ function watchEip6963() {
   });
 }
 
-const RPC_HINT =
-  "The QRL wallet is still using http://209.250.255.226:8545 (that node is down). In the wallet: Networks → QRL Zond Testnet v2 → Edit → set RPC to https://qrlwallet.com/api/qrl-rpc/testnet → Save. Then reload this tab. Adding a second chain with the same chain id does not replace the dead RPC.";
-
 function rpcFail(err) {
   const msg = err?.message || String(err);
   if (/failed to fetch|networkerror|err_connection|load failed/i.test(msg)) {
-    return new Error(RPC_HINT);
+    return new Error("Wallet could not reach its node RPC. Connect still works; balances load from ZondScan.");
   }
   return err instanceof Error ? err : new Error(msg);
 }
@@ -391,7 +390,6 @@ async function ensureQrlConnected() {
   if (qrlAccount && qrlProvider) return qrlAccount;
   qrlProvider = pickQrlProvider();
   if (!qrlProvider) throw new Error("Install and unlock the official QRL 2.0 wallet, then retry");
-  await ensureQrlHttpsRpc();
   const acc = await qrlRequest("qrl_requestAccounts");
   qrlAccount = Array.isArray(acc) ? acc[0] : acc;
   if ($("qrl-account")) $("qrl-account").textContent = toQ(qrlAccount) || "connected";
