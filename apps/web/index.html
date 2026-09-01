@@ -44,7 +44,12 @@
         <p class="vm">Use the official QRL 2.0 Web3 Wallet. Arc (MetaMask) is only for Arc Testnet.</p>
         <button type="button" id="qrl-connect">Connect QRL wallet</button>
         <p id="qrl-account" class="hint">Not connected</p>
-        <button type="button" id="arc-connect">Connect Arc wallet</button>
+        <label>Arc extension
+          <select id="arc-wallet-pick">
+            <option value="">Detected wallets appear here</option>
+          </select>
+        </label>
+        <button type="button" id="arc-connect">Connect selected Arc wallet</button>
         <p id="arc-account" class="hint">Not connected</p>
         <p class="hint warn-rpc">The wallet ships Testnet RPC <code>http://209.250.255.226:8545</code>. That host is dead. Connect will ask you to add <code>https://qrlwallet.com/api/qrl-rpc/testnet</code>. If you already added Testnet, open the wallet → networks → edit that chain and replace the RPC. Token import and drip will fail until this is HTTPS.</p>
       </li>
@@ -195,6 +200,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux18"></script>
+  <script type="module" src="./app.js?v=ux19"></script>
 </body>
 </html>

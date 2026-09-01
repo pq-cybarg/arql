@@ -223,10 +223,32 @@ function pickQrlProvider() {
   return window.qrl || null;
 }
 
+function evmWallets() {
+  const out = [];
+  for (const d of eip6963.values()) {
+    if (!isQrlInfo(d.info, d.provider)) out.push(d);
+  }
+  return out;
+}
+
+function renderArcPicker() {
+  const sel = $("arc-wallet-pick");
+  if (!sel) return;
+  const wallets = evmWallets();
+  const prev = sel.value || sessionStorage.getItem("arcWalletUuid") || "";
+  sel.innerHTML = wallets.length
+    ? wallets.map((d) => `<option value="${d.info.uuid}">${d.info.name} (${d.info.rdns || "injected"})</option>`).join("")
+    : `<option value="">No EVM wallet announced yet</option>`;
+  if (prev && [...sel.options].some((o) => o.value === prev)) sel.value = prev;
+}
+
 function watchEip6963() {
   window.addEventListener("eip6963:announceProvider", (ev) => {
     const d = ev.detail;
-    if (d?.info?.uuid && d.provider) eip6963.set(d.info.uuid, d);
+    if (d?.info?.uuid && d.provider) {
+      eip6963.set(d.info.uuid, d);
+      renderArcPicker();
+    }
   });
 }
 
@@ -530,15 +552,34 @@ $("qrl-connect").addEventListener("click", async () => {
   }
 });
 
+$("arc-wallet-pick")?.addEventListener("change", (e) => {
+  sessionStorage.setItem("arcWalletUuid", e.target.value);
+});
+
 $("arc-connect").addEventListener("click", async () => {
-  if (!window.ethereum) {
-    $("arc-account").textContent = "No injected EVM wallet";
+  renderArcPicker();
+  const uuid = $("arc-wallet-pick")?.value;
+  const d = (uuid && eip6963.get(uuid)) || evmWallets()[0];
+  if (!d?.provider) {
+    $("arc-account").textContent = "Pick an EVM extension (MetaMask, Rabby, Brave, …). window.ethereum is ignored.";
     return;
   }
+  sessionStorage.setItem("arcWalletUuid", d.info.uuid);
   try {
-    await window.ethereum.request({ method: "wallet_addEthereumChain", params: [ARC] });
-    const acc = await window.ethereum.request({ method: "eth_requestAccounts" });
-    $("arc-account").textContent = acc[0] || "connected";
+    const p = d.provider;
+    try {
+      await p.request({ method: "wallet_addEthereumChain", params: [ARC] });
+    } catch {
+      /* already added */
+    }
+    try {
+      await p.request({ method: "wallet_switchEthereumChain", params: [{ chainId: ARC.chainId }] });
+    } catch {
+      /* user rejected switch */
+    }
+    const acc = await p.request({ method: "eth_requestAccounts" });
+    $("arc-account").textContent = `${d.info.name}: ${acc[0] || "connected"}`;
+    tape({ arcWallet: d.info.name, rdns: d.info.rdns, account: acc[0] });
   } catch (err) {
     $("arc-account").textContent = err.message || String(err);
   }
