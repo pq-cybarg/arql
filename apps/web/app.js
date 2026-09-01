@@ -269,10 +269,15 @@ $("qrl-connect").addEventListener("click", async () => {
     tape({ connected: toQ(qrlAccount) });
   } catch (err) {
     const msg = err.message || String(err);
-    $("qrl-account").textContent = msg;
+    const stale = /extension context invalidated/i.test(msg);
+    $("qrl-account").textContent = stale
+      ? "Wallet extension was reloaded. Refresh this tab, then Connect again."
+      : msg;
     tape({
       error: msg,
-      hint: "In the QRL wallet, use Testnet with HTTPS RPC https://qrlwallet.com/api/qrl-rpc/testnet (not a local http://...:8545 node).",
+      hint: stale
+        ? "chrome://extensions Reload leaves a dead content script in open tabs. Refresh this page."
+        : "QRL Testnet RPC must be https://qrlwallet.com/api/qrl-rpc/testnet (qrl_ methods).",
     });
   }
 });
