@@ -1,3 +1,13 @@
+import {
+  ANNOUNCE_PROVIDER,
+  REQUEST_PROVIDER,
+  collectEvmWallets,
+  findWallet,
+  pickQrlProvider as pickQrlFrom,
+  shouldSkipLiveApi,
+  walletRpcUrl,
+} from "./wallets.js";
+
 const $ = (id) => document.getElementById(id);
 
 function toQ(addr) {
@@ -39,6 +49,7 @@ async function readJson(r) {
 }
 
 async function apiState() {
+  if (shouldSkipLiveApi(location.hostname)) throw new Error("no /api/state");
   const r = await fetch("/api/state");
   if (!r.ok) throw new Error("no /api/state");
   return readJson(r);
@@ -211,24 +222,12 @@ function calldata(sel, ...words) {
 
 const eip6963 = new Map();
 
-function isQrlInfo(info, provider) {
-  const n = `${info?.rdns || ""} ${info?.name || ""}`.toLowerCase();
-  return n.includes("qrl") || n.includes("zond") || !!provider?.isQrlWallet;
-}
-
 function pickQrlProvider() {
-  for (const d of eip6963.values()) {
-    if (isQrlInfo(d.info, d.provider)) return d.provider;
-  }
-  return window.qrl || null;
+  return pickQrlFrom(eip6963, window);
 }
 
 function evmWallets() {
-  const out = [];
-  for (const d of eip6963.values()) {
-    if (!isQrlInfo(d.info, d.provider)) out.push(d);
-  }
-  return out;
+  return collectEvmWallets(eip6963, window.ethereum);
 }
 
 function renderArcPicker() {
@@ -238,18 +237,27 @@ function renderArcPicker() {
   const prev = sel.value || sessionStorage.getItem("arcWalletUuid") || "";
   sel.innerHTML = wallets.length
     ? wallets.map((d) => `<option value="${d.info.uuid}">${d.info.name} (${d.info.rdns || "injected"})</option>`).join("")
-    : `<option value="">No EVM wallet announced yet</option>`;
+    : `<option value="">No Arc wallet yet — unlock and Refresh</option>`;
   if (prev && [...sel.options].some((o) => o.value === prev)) sel.value = prev;
 }
 
+let lastProviderRequest = 0;
+function requestEip6963() {
+  const now = Date.now();
+  if (now - lastProviderRequest < 1500) return;
+  lastProviderRequest = now;
+  window.dispatchEvent(new Event(REQUEST_PROVIDER));
+}
+
 function watchEip6963() {
-  window.addEventListener("eip6963:announceProvider", (ev) => {
+  window.addEventListener(ANNOUNCE_PROVIDER, (ev) => {
     const d = ev.detail;
     if (d?.info?.uuid && d.provider) {
       eip6963.set(d.info.uuid, d);
       renderArcPicker();
     }
   });
+  requestEip6963();
 }
 
 function rpcFail(err) {
@@ -271,7 +279,8 @@ async function qrlRequest(method, params = []) {
 
 async function ensureQrlHttpsRpc() {
   const chainId = "0x" + Number(cfg.chainId || 1337).toString(16);
-  const rpc = cfg.rpc || "https://qrlwallet.com/api/qrl-rpc/testnet";
+  const rpc = walletRpcUrl(location, cfg.rpc);
+  if (shouldSkipLiveApi(location.hostname) && /qrlwallet\.com/i.test(rpc)) return;
   const add = {
     chainId,
     chainName: "QRL Testnet V2 (public HTTPS)",
@@ -556,12 +565,28 @@ $("arc-wallet-pick")?.addEventListener("change", (e) => {
   sessionStorage.setItem("arcWalletUuid", e.target.value);
 });
 
+$("arc-wallet-pick")?.addEventListener("focus", () => {
+  requestEip6963();
+  renderArcPicker();
+});
+
+$("arc-refresh")?.addEventListener("click", () => {
+  lastProviderRequest = 0;
+  requestEip6963();
+  renderArcPicker();
+  const n = evmWallets().length;
+  $("arc-account").textContent = n
+    ? `${n} Arc wallet${n === 1 ? "" : "s"} listed. Pick one, then Connect.`
+    : "No Arc wallet announced yet. Unlock the extension, then Refresh.";
+});
+
 $("arc-connect").addEventListener("click", async () => {
+  requestEip6963();
   renderArcPicker();
   const uuid = $("arc-wallet-pick")?.value;
-  const d = (uuid && eip6963.get(uuid)) || evmWallets()[0];
+  const d = findWallet(evmWallets(), eip6963, uuid);
   if (!d?.provider) {
-    $("arc-account").textContent = "Pick an EVM extension (MetaMask, Rabby, Brave, …). window.ethereum is ignored.";
+    $("arc-account").textContent = "Pick an Arc wallet in the list. Unlock it and click Refresh if it is missing.";
     return;
   }
   sessionStorage.setItem("arcWalletUuid", d.info.uuid);

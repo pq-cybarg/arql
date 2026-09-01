@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ARQL — move USDC between Arc and QRL</title>
+  <link rel="icon" href="./usdc.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@500;700;800&display=swap" rel="stylesheet" />
@@ -49,9 +50,10 @@
             <option value="">Detected wallets appear here</option>
           </select>
         </label>
+        <button type="button" id="arc-refresh">Refresh wallet list</button>
         <button type="button" id="arc-connect">Connect selected Arc wallet</button>
         <p id="arc-account" class="hint">Not connected</p>
-        <p class="hint warn-rpc">The wallet ships Testnet RPC <code>http://209.250.255.226:8545</code>. That host is dead. Connect will ask you to add <code>https://qrlwallet.com/api/qrl-rpc/testnet</code>. If you already added Testnet, open the wallet → networks → edit that chain and replace the RPC. Token import and drip will fail until this is HTTPS.</p>
+        <p class="hint warn-rpc">Arc: pick the extension, then Connect. Refresh if a wallet is missing (some only announce when asked). QRL Wallet may log Failed to fetch on GitHub Pages because the official Testnet RPC allows qrlwallet.com, localhost:5173, and chrome-extension pages, not this site. Connect still works. Balances load from ZondScan. MetaMask MaxListeners / ObjectMultiplex lines are the extension, not this page.</p>
       </li>
       <li class="panel">
         <h2>2. Get test USDC on QRL</h2>
@@ -200,6 +202,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux19"></script>
+  <script type="module" src="./app.js?v=ux20"></script>
 </body>
 </html>

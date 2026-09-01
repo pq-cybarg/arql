@@ -16,8 +16,12 @@ const PORT = Number(process.env.WEB_PORT || 7470);
 const types = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".json": "application/json",
+  ".png": "image/png",
+  ".ico": "image/x-icon",
+  ".svg": "image/svg+xml",
 };
 
 function sendJson(res, obj, code = 200) {
@@ -40,6 +44,15 @@ function readBody(req) {
         reject(err);
       }
     });
+  });
+}
+
+function readRaw(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (c) => chunks.push(c));
+    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("error", reject);
   });
 }
 
@@ -228,6 +241,26 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname === "/qrl/usdc" || url.pathname === "/api/state") {
       return sendJson(res, await state());
+    }
+    if (url.pathname === "/api/qrl-rpc") {
+      if (req.method !== "POST") {
+        res.writeHead(405, { "access-control-allow-origin": "*" });
+        return res.end("POST only");
+      }
+      const upstream = process.env.QRL_RPC || "https://qrlwallet.com/api/qrl-rpc/testnet";
+      const r = await fetch(upstream, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: await readRaw(req),
+      });
+      const text = await r.text();
+      res.writeHead(r.status, {
+        "content-type": r.headers.get("content-type") || "application/json",
+        "access-control-allow-origin": "*",
+        "access-control-allow-headers": "content-type",
+        "cache-control": "no-store",
+      });
+      return res.end(text);
     }
     if (req.method === "POST" && url.pathname === "/api/qrl") {
       const body = await readBody(req);
