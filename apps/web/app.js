@@ -73,9 +73,11 @@ function paint(s) {
   }
   if ($("sanc-out") && guest) $("sanc-out").textContent = "Flag and clear are operator-only. Anyone can Check.";
   paintReports(s);
-  if ($("faucet-status") && s.faucet) {
-    $("faucet-status").textContent =
-      `${s.faucet.remainingToday} USDC left today · ${s.faucet.perAccount} per address · day cap ${s.faucet.dailyTotal}`;
+  if ($("faucet-status")) {
+    const f = s.faucetQ || cfg.faucetQ;
+    $("faucet-status").textContent = f
+      ? `On-chain drip ${f} · 2 USDC / address / UTC day · 9 USDC / day total · wallet signature only`
+      : "On-chain faucet address missing from config";
   }
 }
 
@@ -322,14 +324,25 @@ const ARC = {
   blockExplorerUrls: ["https://testnet.arcscan.app"],
 };
 
+async function ensureQrlConnected() {
+  if (qrlAccount && qrlProvider) return qrlAccount;
+  qrlProvider = pickQrlProvider();
+  if (!qrlProvider) throw new Error("Install and unlock the official QRL 2.0 wallet, then retry");
+  const acc = await qrlRequest("qrl_requestAccounts");
+  qrlAccount = Array.isArray(acc) ? acc[0] : acc;
+  if ($("qrl-account")) $("qrl-account").textContent = toQ(qrlAccount) || "connected";
+  return qrlAccount;
+}
+
 async function claimFaucet(rail) {
   try {
-  const s = await refresh();
+  if (!cfg.faucetQ) cfg = await loadConfig().catch(() => cfg);
   if (rail === "qrl") {
-    const faucet = cfg.faucetQ || s.faucetQ;
+    await ensureQrlConnected();
+    const faucet = cfg.faucetQ;
     if (!faucet) throw new Error("on-chain faucet not deployed");
     const out = await walletSend(faucet, "0x9f678cca");
-    tape(out);
+    tape({ drip: out, faucet });
     setTimeout(refresh, 5000);
     return;
   }

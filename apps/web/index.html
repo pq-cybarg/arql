@@ -21,7 +21,7 @@
       <div class="mark">ARQL</div>
       <span class="live" id="live-badge">testnet</span>
     </div>
-    <p class="lede">Send test USDC on QRL, or bridge it to Arc. Connect a wallet, get a small faucet drop, then send or bridge.</p>
+    <p class="lede">This site drips 2 test USDC on QRL from a public contract. Connect the QRL 2.0 wallet and approve one transaction. No operator desk.</p>
   </header>
 
   <main>
@@ -42,11 +42,11 @@
         <p class="hint">Wallet: <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">QRL Web3 Wallet release</a>. If Testnet cannot reach a node, edit the chain RPC in the wallet to <code>https://qrlwallet.com/api/qrl-rpc/testnet</code>.</p>
       </li>
       <li class="panel">
-        <h2>2. Get test USDC</h2>
-        <p class="vm">Arc Testnet USDC comes from Circle: 20 USDC every 2 hours per address. QRL test USDC is our on-chain drip: 2 USDC per address per UTC day, 9 USDC total per day (under half of Circle’s 20).</p>
-        <button type="button" id="faucet-arc">Get 20 USDC on Arc (Circle)</button>
-        <button type="button" id="faucet-qrl">Get 2 USDC on QRL</button>
-        <p id="faucet-status" class="hint">Arc: faucet.circle.com (pick Arc Testnet). QRL: connect the QRL wallet, then drip (works on GitHub Pages).</p>
+        <h2>2. Get test USDC on QRL</h2>
+        <p class="vm">On-chain <code>drip()</code> to your connected address. 2 USDC per address per UTC day, 9 USDC total per day. You only sign in the wallet. Arc Testnet USDC is separate (Circle’s site, 20 USDC / 2 hours).</p>
+        <button type="button" id="faucet-qrl">Drip 2 USDC (on-chain)</button>
+        <button type="button" id="faucet-arc">Open Circle Arc faucet</button>
+        <p id="faucet-status" class="hint">Contract Qa02527193ef60264810de234c7812700d2db9a2e · gas only</p>
       </li>
       <li class="panel">
         <h2>3. Send on QRL</h2>
@@ -58,7 +58,7 @@
       </li>
       <li class="panel">
         <h2>4. Bridge to Arc</h2>
-        <p class="vm">This is the return trip. It burns your QRL USDC and asks Arc to unlock the same native USDC. A standalone burn (under More tools) only destroys tokens and does not pay anyone on Arc.</p>
+        <p class="vm">Burns QRL USDC so native Circle USDC can be unlocked on Arc (TokenMinter). That is the only burn on this rail.</p>
         <form data-action="approve">
           <input type="hidden" name="spender" id="approve-spender" />
           <label>Approve amount <input name="amount" value="1000" inputmode="decimal" /></label>
@@ -182,6 +182,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux9"></script>
+  <script type="module" src="./app.js?v=ux10"></script>
 </body>
 </html>
