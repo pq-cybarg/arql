@@ -447,6 +447,31 @@ $("report-send")?.addEventListener("click", async () => {
   }
 });
 
+$("add-token")?.addEventListener("click", async () => {
+  try {
+    await ensureQrlConnected();
+    if (!cfg.usdcQ) cfg = await loadConfig();
+    const ok = await qrlProvider.request({
+      method: "wallet_watchAsset",
+      params: {
+        type: "ERC20",
+        options: {
+          address: toQ(cfg.usdcQ),
+          symbol: "USDC",
+          decimals: 6,
+          image: "",
+        },
+      },
+    });
+    tape({ watchAsset: ok, token: toQ(cfg.usdcQ), symbol: "USDC", decimals: 6 });
+  } catch (err) {
+    tape({
+      error: err.message || String(err),
+      hint: "Wallet lookup of this token fails (no name/symbol on-chain). Import manually: Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9, USDC, 6 decimals.",
+    });
+  }
+});
+
 $("faucet-qrl")?.addEventListener("click", () => claimFaucet("qrl"));
 $("faucet-arc")?.addEventListener("click", () => claimFaucet("arc"));
 
