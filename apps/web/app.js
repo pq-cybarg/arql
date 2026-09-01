@@ -64,6 +64,14 @@ function paint(s) {
   if ($("approve-spender") && !$("approve-spender").value && s.bridge) $("approve-spender").value = s.bridge;
   if ($("mint-to") && !$("mint-to").value) $("mint-to").value = s.holder;
   if ($("recv-to") && !$("recv-to").value) $("recv-to").value = s.holder;
+  const op = toQ(s.holder);
+  const guest = qrlAccount && toQ(qrlAccount) !== op;
+  for (const id of ["sanc-block", "sanc-clear"]) {
+    const el = $(id);
+    if (el) el.hidden = !!guest || staticMode;
+  }
+  if ($("sanc-out") && guest) $("sanc-out").textContent = "Flag and clear are operator-only. Anyone can Check.";
+  paintReports(s);
   if ($("faucet-status") && s.faucet) {
     $("faucet-status").textContent =
       `${s.faucet.remainingToday} USDC left today · ${s.faucet.perAccount} per address · day cap ${s.faucet.dailyTotal}`;
@@ -157,12 +165,35 @@ async function ensureQrlHttpsRpc() {
   }
 }
 
-async function walletSend(to, data) {
+async function walletSend(to, data, value = "0x0") {
   const from = qrlAccount;
   if (!from) throw new Error("Connect the QRL 2.0 wallet first");
-  const tx = { from, to: toQ(to), data, value: "0x0" };
+  const tx = { from, to: toQ(to), data, value };
   const hash = await qrlRequest("qrl_sendTransaction", [tx]);
   return { tx: hash, from, to: toQ(to) };
+}
+
+function asciiTag(text) {
+  const s = String(text || "report").slice(0, 32);
+  let hex = "";
+  for (let i = 0; i < s.length; i++) hex += s.charCodeAt(i).toString(16).padStart(2, "0");
+  return "0x" + hex.padEnd(64, "0");
+}
+
+function paintReports(s) {
+  const box = $("report-list");
+  if (!box) return;
+  const items = s.reports?.items || [];
+  if (!items.length) {
+    box.textContent = "No reports yet.";
+    return;
+  }
+  box.innerHTML = items
+    .map(
+      (r) =>
+        `<li><span class="mute">#${r.id}</span> ${r.subject} <span class="mute">by ${r.reporter} · block ${r.atBlock} · ${r.paidQrl} QRL</span></li>`,
+    )
+    .join("");
 }
 
 async function walletAction(action, fields, s) {
@@ -276,7 +307,16 @@ async function sanc(action, on) {
     $("sanc-out").textContent = "Sanctions demo runs on the local desk.";
     return;
   }
-  const out = await apiQrl(action, { to, on });
+  const s = await refresh();
+  const actor = s.holder;
+  if (action === "sanctionSet") {
+    if (qrlAccount && toQ(qrlAccount) !== toQ(actor)) {
+      $("sanc-out").textContent = "Flag and clear are operator-only.";
+      return;
+    }
+    if (!on && !window.confirm("Clear this address? On-chain, unlist needs owner and guardian.")) return;
+  }
+  const out = await apiQrl(action, { to, on, actor, confirm: on ? undefined : "clear" });
   $("sanc-out").textContent = JSON.stringify(out);
   tape(out);
 }
@@ -284,6 +324,22 @@ async function sanc(action, on) {
 $("sanc-check")?.addEventListener("click", () => sanc("sanctionCheck"));
 $("sanc-block")?.addEventListener("click", () => sanc("sanctionSet", true));
 $("sanc-clear")?.addEventListener("click", () => sanc("sanctionSet", false));
+
+$("report-send")?.addEventListener("click", async () => {
+  try {
+    const board = cfg.reportBoardQ || (await refresh()).reportBoard;
+    if (!board) throw new Error("report board not deployed");
+    const subject = $("report-subject")?.value;
+    const note = $("report-note")?.value;
+    const fee = BigInt(cfg.reportMinFee || "10000000000000000");
+    const data = calldata("0xcaf2cbc5", subject, asciiTag(note).replace(/^0x/, ""));
+    const out = await walletSend(board, data, "0x" + fee.toString(16));
+    tape(out);
+    setTimeout(refresh, 5000);
+  } catch (err) {
+    tape({ error: err.message || String(err) });
+  }
+});
 
 $("faucet-qrl")?.addEventListener("click", () => claimFaucet("qrl"));
 $("faucet-arc")?.addEventListener("click", () => claimFaucet("arc"));

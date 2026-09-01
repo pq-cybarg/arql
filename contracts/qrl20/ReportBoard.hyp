@@ -1,0 +1,41 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma hyperion ^0.0.2;
+
+/// Public report inbox. Anyone can post if they pay minFee (plus gas).
+/// Operator flag/clear is separate and is not this contract.
+contract ReportBoard {
+    address public owner;
+    uint256 public minFee;
+    uint256 public count;
+
+    struct Report {
+        address reporter;
+        address subject;
+        bytes32 tag;
+        uint256 paid;
+        uint256 atBlock;
+    }
+
+    mapping(uint256 => Report) public reports;
+
+    event Reported(uint256 indexed id, address indexed reporter, address indexed subject, bytes32 tag, uint256 paid);
+
+    constructor(uint256 minFee_) {
+        owner = msg.sender;
+        minFee = minFee_;
+    }
+
+    function report(address subject, bytes32 tag) external payable {
+        require(subject != address(0), "subject");
+        require(msg.value >= minFee, "fee");
+        uint256 id = count;
+        count = id + 1;
+        reports[id] = Report(msg.sender, subject, tag, msg.value, block.number);
+        emit Reported(id, msg.sender, subject, tag, msg.value);
+    }
+
+    function setMinFee(uint256 fee) external {
+        require(msg.sender == owner, "owner");
+        minFee = fee;
+    }
+}

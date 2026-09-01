@@ -26,5 +26,8 @@
   "arcLockbox": null,
   "arcChainId": 5042002,
   "arcDomain": 26,
-  "qrlDomain": 42424
+  "qrlDomain": 42424,
+  "reportBoardQ": "Q65d6920586217699ce43e1f5c2e970c10c1726a9",
+  "reportBoardTx": "0xb32ef7c84655b3148071d091f0a3124ade4c1e19ad770fb7f4f5cfc1bf8609fc",
+  "reportMinFee": "10000000000000000"
 }

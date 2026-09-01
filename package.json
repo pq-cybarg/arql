@@ -18,7 +18,9 @@
     "live:wallet": "node live/wallet.mjs",
     "live:faucet": "node live/faucet.mjs",
     "live:deploy": "node live/deploy.mjs",
-    "live:deploy-bridge": "node live/deploy-bridge.mjs"
+    "live:deploy-bridge": "node live/deploy-bridge.mjs",
+    "live:compile-reports": "node live/compile-reports.mjs",
+    "live:deploy-reports": "node live/deploy-reports.mjs"
   },
   "dependencies": {
     "@theqrl/hypc": "^0.0.2",

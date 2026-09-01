@@ -68,17 +68,18 @@
       </li>
     </ol>
 
+    <section class="panel reports">
+      <h2>Public reports</h2>
+      <p class="vm">Anyone can file a report. It is an on-chain transaction (0.01 QRL plus gas) so spam costs money. Filing a report does not flag the address. Only the operator can flag or clear.</p>
+      <label>Subject <input id="report-subject" placeholder="Q… address to report" /></label>
+      <label>Note <input id="report-note" placeholder="short reason" maxlength="32" /></label>
+      <button type="button" id="report-send">Send report (pays 0.01 QRL)</button>
+      <ul id="report-list" class="report-list">No reports yet.</ul>
+    </section>
+
     <details class="more">
       <summary>More tools</summary>
       <div class="board">
-        <article class="panel">
-          <h2>Destroy QRL USDC</h2>
-          <p class="vm">Calls <code>burn</code> on the token only. Supply goes down. Nothing is unlocked on Arc. Use step 4 to bridge.</p>
-          <form data-action="burn">
-            <label>Amount <input name="amount" value="1" inputmode="decimal" /></label>
-            <button type="submit">Destroy (no Arc unlock)</button>
-          </form>
-        </article>
         <article class="panel">
           <h2>Operator</h2>
           <form data-action="mint" data-operator="1">
@@ -96,7 +97,7 @@
         </article>
         <article class="panel">
           <h2>Sanctions demo</h2>
-          <p class="vm">Flag an address. Faucet and operator mint then refuse it. On-chain, the Arc registry and QRL lists screen depositor, recipient, unlock, and burn before value moves. Unlisting takes owner + guardian.</p>
+          <p class="vm">Anyone can Check. Only the operator on this desk can Flag. Clear asks for confirm (on-chain unlist is owner + guardian). A connected user wallet cannot change the list.</p>
           <label>Address <input id="sanc-addr" placeholder="Q… or 0x…" /></label>
           <button type="button" id="sanc-check">Check</button>
           <button type="button" id="sanc-block" data-operator="1">Flag (operator)</button>
@@ -157,11 +158,13 @@
           </ul>
         </article>
         <article class="disclose">
-          <h3>What burn does</h3>
-          <ul>
-            <li><strong>Bridge to Arc</strong> burns QRL USDC as the CCTP-shaped <code>depositForBurn</code>. That is how you cash out to native Arc USDC (once the Arc lockbox is live).</li>
-            <li><strong>Destroy</strong> (More tools) only reduces QRL supply. It does not create an unlock on Arc. Do not use it if you want your dollars back.</li>
-          </ul>
+          <h3>What “burn” means here</h3>
+          <p>
+            On this rail, QRL USDC is only burned as part of <strong>Bridge to Arc</strong>
+            (<code>depositForBurn</code>). That is the return trip: QRL supply goes down so Arc
+            can unlock the same native USDC. There is no standalone destroy button. Burning
+            without an unlock would just throw test dollars away.
+          </p>
         </article>
       </div>
     </details>
@@ -173,6 +176,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux2"></script>
+  <script type="module" src="./app.js?v=ux4"></script>
 </body>
 </html>

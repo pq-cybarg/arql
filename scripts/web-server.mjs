@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { getWeb3, loadMeta, loadAbis, send, units, toQ } from "../live/operator.mjs";
 import { qrlRpc } from "../live/rpc.mjs";
 import { faucetCheck, faucetCommit, faucetStatus } from "./faucet-lib.mjs";
+import { loadReports } from "../live/reports-read.mjs";
 import { isSanctioned, setSanctioned, requireClear } from "./sanctions-lib.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../apps/web");
@@ -93,10 +94,18 @@ async function state() {
     explorerSealedBridge: live.explorerSealedBridge || null,
     bridgeMintSealed: !!live.bridgeMintSealed,
     faucet: faucetStatus(),
+    reportBoard: live.reportBoardQ || null,
+    reportMinFee: live.reportMinFee || "10000000000000000",
+    reports: live.reportBoardQ ? await loadReports(live.reportBoardQ) : { count: 0, items: [] },
   };
 }
 
-async function encodeAndSend(action, body) {
+function isLoopback(req) {
+  const ip = String(req.socket?.remoteAddress || "");
+  return ip === "127.0.0.1" || ip === "::1" || ip.endsWith("127.0.0.1");
+}
+
+async function encodeAndSend(action, body, req) {
   const live = loadMeta();
   const abis = loadAbis();
   const { web3, acc } = getWeb3();
@@ -108,6 +117,11 @@ async function encodeAndSend(action, body) {
     return { account: toAddr, blocked: isSanctioned(toAddr) };
   }
   if (action === "sanctionSet") {
+    if (!isLoopback(req)) throw new Error("flag/clear only from the operator desk");
+    const op = toQ(acc.address);
+    const actor = toQ(body.actor || "");
+    if (actor && actor !== op) throw new Error("only the operator account can flag or clear");
+    if (!body.on && body.confirm !== "clear") throw new Error("clear requires confirm=clear");
     return setSanctioned(toAddr, !!body.on);
   }
   if (["faucet", "mint", "receiveMint", "transfer"].includes(action)) {
@@ -216,7 +230,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && url.pathname === "/api/qrl") {
       const body = await readBody(req);
       const action = body.action;
-      const result = await encodeAndSend(action, body);
+      const result = await encodeAndSend(action, body, req);
       let snap = null;
       try {
         snap = await state();
