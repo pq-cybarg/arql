@@ -43,10 +43,10 @@
       </li>
       <li class="panel">
         <h2>2. Get test USDC</h2>
-        <p class="vm">On-chain QRL faucet: 2 USDC per address per UTC day, 9 USDC total per day. You pay gas in the QRL wallet. Circle’s Arc faucet is 20 USDC per claim; this drip stays under half of that.</p>
+        <p class="vm">Arc Testnet USDC comes from Circle: 20 USDC every 2 hours per address. QRL test USDC is our on-chain drip: 2 USDC per address per UTC day, 9 USDC total per day (under half of Circle’s 20).</p>
+        <button type="button" id="faucet-arc">Get 20 USDC on Arc (Circle)</button>
         <button type="button" id="faucet-qrl">Get 2 USDC on QRL</button>
-        <button type="button" id="faucet-arc">Get 2 USDC on Arc</button>
-        <p id="faucet-status" class="hint">Connect the QRL wallet, then drip. Works on GitHub Pages.</p>
+        <p id="faucet-status" class="hint">Arc: faucet.circle.com (pick Arc Testnet). QRL: connect the QRL wallet, then drip (works on GitHub Pages).</p>
       </li>
       <li class="panel">
         <h2>3. Send on QRL</h2>
@@ -182,6 +182,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux8"></script>
+  <script type="module" src="./app.js?v=ux9"></script>
 </body>
 </html>

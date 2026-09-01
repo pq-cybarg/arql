@@ -333,13 +333,13 @@ async function claimFaucet(rail) {
     setTimeout(refresh, 5000);
     return;
   }
-  if (staticMode) {
-    tape("Arc faucet inventory is filled on the operator machine; QRL drip is the on-chain contract.");
-    return;
-  }
-  const out = await apiQrl("faucet", { rail, to: qrlAccount || s.holder, amount: "2" });
-  tape(out);
-  setTimeout(refresh, 4000);
+  const circle = cfg.circleFaucet || "https://faucet.circle.com/";
+  window.open(circle, "_blank", "noopener,noreferrer");
+  tape({
+    rail: "arc",
+    open: circle,
+    hint: "Select Arc Testnet, USDC, Send 20 USDC. Limit: once per address every 2 hours.",
+  });
   } catch (err) {
     tape({ error: err.message || String(err) });
   }
