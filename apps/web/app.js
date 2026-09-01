@@ -155,7 +155,8 @@ async function pollUser() {
       usdc: fmtUnits(usdcBal, 6),
     });
   } catch (err) {
-    if ($("user-qrl")) $("user-qrl").textContent = err.message || "could not read balances";
+    const e = rpcFail(err);
+    if ($("user-qrl")) $("user-qrl").textContent = e.message;
   }
 }
 
@@ -219,9 +220,24 @@ function watchEip6963() {
   });
 }
 
+const RPC_HINT =
+  "The QRL wallet is still using http://209.250.255.226:8545 (that node is down). In the wallet: Networks → QRL Zond Testnet v2 → Edit → set RPC to https://qrlwallet.com/api/qrl-rpc/testnet → Save. Then reload this tab. Adding a second chain with the same chain id does not replace the dead RPC.";
+
+function rpcFail(err) {
+  const msg = err?.message || String(err);
+  if (/failed to fetch|networkerror|err_connection|load failed/i.test(msg)) {
+    return new Error(RPC_HINT);
+  }
+  return err instanceof Error ? err : new Error(msg);
+}
+
 async function qrlRequest(method, params = []) {
   if (!qrlProvider) throw new Error("Connect the QRL 2.0 wallet first");
-  return qrlProvider.request({ method, params });
+  try {
+    return await qrlProvider.request({ method, params });
+  } catch (err) {
+    throw rpcFail(err);
+  }
 }
 
 async function ensureQrlHttpsRpc() {
