@@ -28,6 +28,8 @@ jobs:
       - name: Public QRVM snapshot (no wallet)
         run: node live/snapshot.mjs
         continue-on-error: true
+      - name: Inline web modules (one script for Pages)
+        run: PAGES_BUNDLE=1 node scripts/bundle-web.mjs apps/web/app.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

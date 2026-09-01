@@ -9,8 +9,12 @@ const server = readFileSync(new URL("../../scripts/web-server.mjs", import.meta.
 test("Pages desk asks wallets to re-announce and does not hit /api/state on github.io", () => {
   assert.match(html, /rel="icon" href="\.\/usdc\.png"/);
   assert.match(html, /id="arc-refresh"/);
-  assert.match(html, /app\.js\?v=ux21/);
+  assert.match(html, /app\.js\?v=ux23/);
   assert.match(html, /Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9/);
+  assert.doesNotMatch(html, /Allow bridge/);
+  assert.match(html, /Bridge to Arc/);
+  assert.match(app, /gas: "0x40000"/);
+  assert.match(app, /action === "depositForBurn"/);
   assert.match(app, /from "\.\/wallets\.js"/);
   assert.match(app, /from "\.\/chain\.js"/);
   assert.match(app, /requestEip6963\(\)/);

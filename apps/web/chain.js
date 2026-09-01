@@ -51,6 +51,17 @@ async function zondJson(path) {
   return JSON.parse(text);
 }
 
+export function zondNonceHex(agg) {
+  const n = agg?.address?.nonce ?? agg?.nonce ?? 0;
+  return "0x" + Number(n).toString(16);
+}
+
+export function userUsdcDisplay(tokensResp, usdcQ, decimals = 6) {
+  const tok = findTokenBalance(tokensResp, usdcQ);
+  if (!tok) return "0";
+  return rawToDisplay(tok.raw, tok.decimals ?? decimals);
+}
+
 export async function loadLiveInventory(cfg) {
   const holder = canonQ(cfg.holderQ);
   const faucet = canonQ(cfg.faucetQ);

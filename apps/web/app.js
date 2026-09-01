@@ -7,7 +7,7 @@ import {
   shouldSkipLiveApi,
   walletRpcUrl,
 } from "./wallets.js";
-import { loadLiveInventory } from "./chain.js";
+import { loadLiveInventory, userUsdcDisplay, zondNonceHex } from "./chain.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -85,7 +85,7 @@ function paint(s) {
   $("qrl-minter").textContent = s.minter || "—";
   $("qrl-gas").textContent = `${Number(s.qrl).toFixed(6)} QRL`;
   $("qrl-block").textContent = String(s.block);
-  if ($("approve-spender") && !$("approve-spender").value && s.bridge) $("approve-spender").value = s.bridge;
+
   if ($("mint-to") && !$("mint-to").value) $("mint-to").value = s.holder;
   if ($("recv-to") && !$("recv-to").value) $("recv-to").value = s.holder;
   const op = toQ(s.holder);
@@ -159,6 +159,16 @@ function paintUser(u) {
   $("user-qrl").textContent = `${u.qrl} QRL · ${u.account}`;
 }
 
+async function zondSoft(path) {
+  try {
+    const r = await fetch(`https://zondscan.com/api${path}`);
+    if (!r.ok) return {};
+    return await readJson(r);
+  } catch {
+    return {};
+  }
+}
+
 async function pollUser() {
   if (!qrlAccount) {
     paintUser(null);
@@ -168,21 +178,23 @@ async function pollUser() {
     if (!cfg.usdcQ) cfg = await loadConfig().catch(() => cfg);
     const acc = toQ(qrlAccount);
     const [info, tokens] = await Promise.all([
-      fetch(`https://zondscan.com/api/address/aggregate/${acc}`).then(readJson),
-      fetch(`https://zondscan.com/api/address/${acc}/tokens`).then(readJson),
+      zondSoft(`/address/aggregate/${acc}`),
+      zondSoft(`/address/${acc}/tokens`),
     ]);
-    const qrl = info?.address?.balance ?? info?.balance;
-    const want = toQ(cfg.usdcQ).toLowerCase();
-    const tok = (tokens?.tokens || []).find((t) => toQ(t.contractAddress).toLowerCase() === want);
-    const raw = tok?.balance ?? "0";
+    const qrl = info?.address?.balance ?? info?.balance ?? 0;
     paintUser({
       account: acc,
-      qrl: qrl == null ? "—" : String(qrl),
-      usdc: fmtUnits(raw.startsWith("0x") ? raw : BigInt(raw).toString(), tok?.decimals ?? 6),
+      qrl: String(qrl),
+      usdc: userUsdcDisplay(tokens, cfg.usdcQ, cfg.decimals || 6),
     });
   } catch (err) {
+    paintUser({ account: toQ(qrlAccount), qrl: "—", usdc: "0" });
     if ($("user-qrl")) $("user-qrl").textContent = err.message || "could not read balances";
   }
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 function tape(obj) {
@@ -198,6 +210,7 @@ let cfg = {};
 let qrlProvider = null;
 let qrlAccount = "";
 let staticMode = false;
+let nextNonce = null;
 
 function setStaticMode(on) {
   staticMode = on;
@@ -226,7 +239,7 @@ function calldata(sel, ...words) {
 
 const eip6963 = new Map();
 
-function pickQrlProvider() {
+function currentQrlProvider() {
   return pickQrlFrom(eip6963, window);
 }
 
@@ -308,9 +321,32 @@ async function ensureQrlHttpsRpc() {
 async function walletSend(to, data, value = "0x0") {
   const from = qrlAccount;
   if (!from) throw new Error("Connect the QRL 2.0 wallet first");
-  const tx = { from, to: toQ(to), data, value };
-  const hash = await qrlRequest("qrl_sendTransaction", [tx]);
-  return { tx: hash, from, to: toQ(to) };
+  if (nextNonce == null) {
+    const agg = await zondSoft(`/address/aggregate/${toQ(from)}`);
+    nextNonce = Number(BigInt(zondNonceHex(agg)));
+  }
+  const tx = {
+    from,
+    to: toQ(to),
+    data,
+    value,
+    gas: "0x40000",
+    gasPrice: "0x9502f907",
+    nonce: "0x" + nextNonce.toString(16),
+    chainId: "0x" + Number(cfg.chainId || 1337).toString(16),
+  };
+  let hash;
+  try {
+    hash = await qrlRequest("qrl_sendTransaction", [tx]);
+  } catch (err) {
+    try {
+      hash = await qrlRequest("eth_sendTransaction", [tx]);
+    } catch {
+      throw err;
+    }
+  }
+  nextNonce += 1;
+  return { tx: hash, from: toQ(from), to: toQ(to) };
 }
 
 function asciiTag(text) {
@@ -344,7 +380,9 @@ async function walletAction(action, fields, s) {
   if (action === "approve") return walletSend(token, calldata("0x095ea7b3", fields.spender, amt));
   if (action === "burn") return walletSend(token, calldata("0x42966c68", amt));
   if (action === "depositForBurn") {
-    return walletSend(bridge, calldata("0x01a8a164", amt, BigInt(fields.destinationDomain || 26), fields.mintRecipient));
+    const allow = await walletSend(token, calldata("0x095ea7b3", bridge, amt));
+    const burn = await walletSend(bridge, calldata("0x01a8a164", amt, BigInt(fields.destinationDomain || 26), fields.mintRecipient));
+    return { allow, ...burn };
   }
   throw new Error(`${action} is operator-only`);
 }
@@ -444,27 +482,40 @@ const ARC = {
 
 async function ensureQrlConnected() {
   if (qrlAccount && qrlProvider) return qrlAccount;
-  qrlProvider = pickQrlProvider();
+  qrlProvider = currentQrlProvider();
   if (!qrlProvider) throw new Error("Install and unlock the official QRL 2.0 wallet, then retry");
   const acc = await qrlRequest("qrl_requestAccounts");
   qrlAccount = Array.isArray(acc) ? acc[0] : acc;
+  nextNonce = null;
   if ($("qrl-account")) $("qrl-account").textContent = toQ(qrlAccount) || "connected";
   return qrlAccount;
 }
 
 async function claimFaucet(rail) {
+  const status = $("faucet-status");
   try {
   if (!cfg.faucetQ) cfg = await loadConfig().catch(() => cfg);
   if (rail === "qrl") {
     await ensureQrlConnected();
     const faucet = cfg.faucetQ;
     if (!faucet) throw new Error("on-chain faucet not deployed");
+    const before = $("user-usdc")?.textContent;
+    if (status) status.textContent = "Approve drip() in the QRL wallet…";
     const out = await walletSend(faucet, "0x9f678cca");
-    tape({ drip: out, faucet });
-    setTimeout(() => {
-      refresh();
-      pollUser();
-    }, 5000);
+    tape({ drip: out, faucet, explorer: zondTx(out.tx) });
+    if (status) status.textContent = `Drip sent ${out.tx}. QRL blocks are ~1 min. Waiting for ZondScan…`;
+    for (let i = 0; i < 24; i++) {
+      await sleep(5000);
+      await pollUser();
+      await refresh();
+      const now = $("user-usdc")?.textContent;
+      if (now && now !== before && !now.startsWith("—")) {
+        if (status) status.textContent = `Received. Your wallet now shows ${now}.`;
+        return;
+      }
+      if (status) status.textContent = `Drip sent. Waiting for the next QRL block (${i + 1}/24)… ${zondTx(out.tx)}`;
+    }
+    if (status) status.textContent = `Tx sent. If USDC is still 0, open ${zondTx(out.tx)} — the indexer lags a block.`;
     return;
   }
   const circle = cfg.circleFaucet || "https://faucet.circle.com/";
@@ -475,7 +526,9 @@ async function claimFaucet(rail) {
     hint: "Select Arc Testnet, USDC, Send 20 USDC. Limit: once per address every 2 hours.",
   });
   } catch (err) {
-    tape({ error: err.message || String(err) });
+    const msg = err.message || String(err);
+    tape({ error: msg });
+    if (status) status.textContent = msg;
   }
 }
 
@@ -558,7 +611,7 @@ $("faucet-arc")?.addEventListener("click", () => claimFaucet("arc"));
 
 $("qrl-connect").addEventListener("click", async () => {
   try {
-    qrlProvider = pickQrlProvider();
+    qrlProvider = currentQrlProvider();
     if (!qrlProvider) {
       $("qrl-account").innerHTML =
         'No QRL 2.0 wallet found. Install the official <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">QRL Web3 Wallet</a>, then reload this page.';
@@ -566,6 +619,7 @@ $("qrl-connect").addEventListener("click", async () => {
     }
     const acc = await qrlRequest("qrl_requestAccounts");
     qrlAccount = Array.isArray(acc) ? acc[0] : acc;
+    nextNonce = null;
     $("qrl-account").textContent = toQ(qrlAccount) || "connected";
     tape({ connected: toQ(qrlAccount) });
     pollUser();
@@ -637,7 +691,7 @@ $("arc-connect").addEventListener("click", async () => {
 watchEip6963();
 cfg = await loadConfig().catch(() => ({}));
 setTimeout(() => {
-  if (pickQrlProvider()) $("qrl-account").textContent = "QRL 2.0 wallet detected — click Connect";
+  if (currentQrlProvider()) $("qrl-account").textContent = "QRL 2.0 wallet detected — click Connect";
 }, 400);
 await refresh();
 pollUser();

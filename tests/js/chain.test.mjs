@@ -5,6 +5,8 @@ import {
   findTokenBalance,
   rawToDisplay,
   inventoryFromZond,
+  zondNonceHex,
+  userUsdcDisplay,
 } from "../../apps/web/chain.js";
 
 test("canonQ normalizes 0x and Q addresses", () => {
@@ -54,4 +56,18 @@ test("inventoryFromZond uses faucet remaining for the user-facing pool", () => {
   assert.equal(inv.pool, "100");
   assert.equal(inv.block, 221426);
   assert.equal(inv.qrl, 9.97);
+});
+
+test("zondNonceHex reads aggregate nonce", () => {
+  assert.equal(zondNonceHex({ address: { nonce: 14 } }), "0xe");
+  assert.equal(zondNonceHex({ nonce: 0 }), "0x0");
+});
+
+test("userUsdcDisplay is 0 when the live token is missing from the list", () => {
+  const live = "Qadf94bb6e061a9f3b1d54826241eba701d43fb86";
+  assert.equal(userUsdcDisplay({ tokens: [] }, live), "0");
+  assert.equal(
+    userUsdcDisplay({ tokens: [{ contractAddress: live, balance: "2000000", decimals: 6 }] }, live),
+    "2",
+  );
 });

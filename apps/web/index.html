@@ -78,14 +78,9 @@
       </li>
       <li class="panel">
         <h2>4. Bridge to Arc</h2>
-        <p class="vm">Burns QRL USDC so native Circle USDC can be unlocked on Arc (TokenMinter). That is the only burn on this rail.</p>
-        <form data-action="approve">
-          <input type="hidden" name="spender" id="approve-spender" />
-          <label>Approve amount <input name="amount" value="1000" inputmode="decimal" /></label>
-          <button type="submit">Allow bridge</button>
-        </form>
+        <p class="vm">Burns QRL USDC so native Circle USDC can be unlocked on Arc. One amount. The wallet will ask you to allow that amount, then to send it. That is the only burn on this rail.</p>
         <form data-action="depositForBurn">
-          <label>Arc recipient <input name="mintRecipient" placeholder="0x… on Arc" /></label>
+          <label>Arc recipient <input name="mintRecipient" placeholder="0x… on Arc" required /></label>
           <label>Amount <input name="amount" value="1" inputmode="decimal" /></label>
           <input type="hidden" name="destinationDomain" value="26" />
           <button type="submit">Bridge to Arc</button>
@@ -202,6 +197,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux21"></script>
+  <script type="module" src="./app.js?v=ux23"></script>
 </body>
 </html>
