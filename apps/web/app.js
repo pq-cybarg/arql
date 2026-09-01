@@ -30,10 +30,18 @@ function formData(form) {
   return o;
 }
 
+async function readJson(r) {
+  const text = await r.text();
+  const ct = r.headers.get("content-type") || "";
+  if (!r.ok) throw new Error(`${r.status} ${text.slice(0, 80)}`);
+  if (!ct.includes("json") && !/^\s*[\[{]/.test(text)) throw new Error("not json");
+  return JSON.parse(text);
+}
+
 async function apiState() {
   const r = await fetch("/api/state");
   if (!r.ok) throw new Error("no /api/state");
-  return r.json();
+  return readJson(r);
 }
 
 async function apiQrl(action, fields) {
@@ -42,7 +50,7 @@ async function apiQrl(action, fields) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ action, ...fields }),
   });
-  return r.json();
+  return readJson(r);
 }
 
 function paint(s) {
@@ -145,8 +153,8 @@ async function pollUser() {
     if (!cfg.usdcQ) cfg = await loadConfig().catch(() => cfg);
     const acc = toQ(qrlAccount);
     const [info, tokens] = await Promise.all([
-      fetch(`https://zondscan.com/api/address/${acc}`).then((r) => r.json()),
-      fetch(`https://zondscan.com/api/address/${acc}/tokens`).then((r) => r.json()),
+      fetch(`https://zondscan.com/api/address/aggregate/${acc}`).then(readJson),
+      fetch(`https://zondscan.com/api/address/${acc}/tokens`).then(readJson),
     ]);
     const qrl = info?.address?.balance ?? info?.balance;
     const want = toQ(cfg.usdcQ).toLowerCase();
@@ -168,7 +176,7 @@ function tape(obj) {
 
 async function loadConfig() {
   const r = await fetch("./config.json");
-  return r.json();
+  return readJson(r);
 }
 
 let cfg = {};
