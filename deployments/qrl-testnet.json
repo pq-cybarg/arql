@@ -5,8 +5,9 @@
   "addressBytes": 20,
   "chainId": 1337,
   "rpc": "https://qrlwallet.com/api/qrl-rpc/testnet",
-  "usdc": "Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
-  "usdcQ": "Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
+  "previousUsdcQ": "Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
+  "usdc": "Qadf94bb6e061a9f3b1d54826241eba701d43fb86",
+  "usdcQ": "Qadf94bb6e061a9f3b1d54826241eba701d43fb86",
   "deployer": "Q34cd38c76995e150ec583ff558cAD07e08DaAD75",
   "deployerQ": "Q34cd38c76995e150ec583ff558cAD07e08DaAD75",
   "name": "USD Coin",
@@ -14,9 +15,9 @@
   "decimals": 6,
   "totalSupply": "1000000000",
   "mintedToDeployer": "1000000000",
-  "deployTx": "0x845902c24c9c9e85def6be6988da2703a8333ca147dc7bb0581ede1df6403b87",
-  "mintTx": "0x0e8b64f7bd7442c5bf157d85fb3ccf2f7db5aa856ba03774bd33aecdede5e832",
-  "explorerToken": "https://zondscan.com/address/Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
+  "deployTx": "0xede10f2d20290d01f8588e22348a452bd83de18c2b7a5d6b90d1f5f3684476fa",
+  "mintTx": "0xc3e6b05f8f8fa1824c39819df0cb0e4879e085421e5da65571c1a51b98e429db",
+  "explorerToken": "https://zondscan.com/address/Qadf94bb6e061a9f3b1d54826241eba701d43fb86",
   "explorerTx": "https://zondscan.com/tx/0x0e8b64f7bd7442c5bf157d85fb3ccf2f7db5aa856ba03774bd33aecdede5e832",
   "note": "QRC-20 USDC on public QRL 2.0 Testnet V2 (20-byte Q addresses). Not ERC-20.",
   "bridge": "Q89b8cdf9bddba27ac48938bd82d99f33796bcc05",
@@ -32,6 +33,6 @@
   "reportBoardQ": "Q65d6920586217699ce43e1f5c2e970c10c1726a9",
   "reportBoardTx": "0xb32ef7c84655b3148071d091f0a3124ade4c1e19ad770fb7f4f5cfc1bf8609fc",
   "reportMinFee": "10000000000000000",
-  "faucetQ": "Qa02527193ef60264810de234c7812700d2db9a2e",
-  "faucetTx": "0xfc6ae021fc745cb72094b456ee146b2dab47aa4a7c60a504bcbb82b3b18cdeee"
+  "faucetQ": "Qfae14bd34a31d3928f869ca9ccab417ce4921882",
+  "faucetTx": "0x40e96414bd19a17de7c78e0856ad482ed3e52b23cfd0d5ec22d0a50ccbc66a0a"
 }

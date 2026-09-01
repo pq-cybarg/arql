@@ -467,7 +467,7 @@ $("add-token")?.addEventListener("click", async () => {
   } catch (err) {
     tape({
       error: err.message || String(err),
-      hint: "Wallet lookup of this token fails (no name/symbol on-chain). Import manually: Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9, USDC, 6 decimals.",
+      hint: "Import with the Q address (not 0x), symbol USDC, decimals 6. Or use Add USDC to QRL wallet.",
     });
   }
 });

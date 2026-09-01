@@ -1,21 +1,21 @@
 {
   "standard": "QRC-20",
   "network": "qrl-testnet-v2",
-  "contract": "Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
+  "contract": "Qadf94bb6e061a9f3b1d54826241eba701d43fb86",
   "holder": "Q34cd38c76995e150ec583ff558cad07e08daad75",
-  "minter": "Q89b8cdf9bddba27ac48938bd82d99f33796bcc05",
+  "minter": "Q34cd38c76995e150ec583ff558cad07e08daad75",
   "bridge": "Q89b8cdf9bddba27ac48938bd82d99f33796bcc05",
   "symbol": "USDC",
   "decimals": 6,
-  "total": 1030,
-  "held": 930,
+  "total": 1000,
+  "held": 900,
   "allowance": 0,
-  "qrl": 9.987368884964633,
-  "block": 221130,
-  "deployTx": "0x845902c24c9c9e85def6be6988da2703a8333ca147dc7bb0581ede1df6403b87",
-  "mintTx": "0x0e8b64f7bd7442c5bf157d85fb3ccf2f7db5aa856ba03774bd33aecdede5e832",
+  "qrl": 9.979183737441714,
+  "block": 221221,
+  "deployTx": "0xede10f2d20290d01f8588e22348a452bd83de18c2b7a5d6b90d1f5f3684476fa",
+  "mintTx": "0xc3e6b05f8f8fa1824c39819df0cb0e4879e085421e5da65571c1a51b98e429db",
   "bridgeTx": "0x21aa847defe96668eb77249151056e22a01bc9d26282fbc925a512a0bd9a85e5",
-  "explorerToken": "https://zondscan.com/address/Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
+  "explorerToken": "https://zondscan.com/address/Qadf94bb6e061a9f3b1d54826241eba701d43fb86",
   "explorerBridge": "https://zondscan.com/address/Q89b8cdf9bddba27ac48938bd82d99f33796bcc05",
   "sealedBridge": "Q360b826e5290ae8ebb0b58318c12085cb37d9dd8",
   "reportBoard": "Q65d6920586217699ce43e1f5c2e970c10c1726a9",
@@ -29,10 +29,10 @@
     "checks": [
       {
         "name": "QRC-20 USDC",
-        "address": "Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9",
-        "pin": "0x65915713e04e1eda13dc68db03617b8d279bcf8c283148ad0fe294577c808ff1",
-        "build": "0x65915713e04e1eda13dc68db03617b8d279bcf8c283148ad0fe294577c808ff1",
-        "live": "0x65915713e04e1eda13dc68db03617b8d279bcf8c283148ad0fe294577c808ff1",
+        "address": "Qadf94bb6e061a9f3b1d54826241eba701d43fb86",
+        "pin": "0x38a5f691be154140a0d2b0fbc12f1a3393f2e707a96fa48621c83942803e47f8",
+        "build": "0x38a5f691be154140a0d2b0fbc12f1a3393f2e707a96fa48621c83942803e47f8",
+        "live": "0x38a5f691be154140a0d2b0fbc12f1a3393f2e707a96fa48621c83942803e47f8",
         "source": "0x13cc05f31b5911fa5841a705cb66dc62c4ab80cfcc06b0a8fb7221b8b7778527",
         "sourcePin": "0x13cc05f31b5911fa5841a705cb66dc62c4ab80cfcc06b0a8fb7221b8b7778527"
       },
@@ -65,7 +65,7 @@
       },
       {
         "name": "USDC faucet",
-        "address": "Qa02527193ef60264810de234c7812700d2db9a2e",
+        "address": "Qfae14bd34a31d3928f869ca9ccab417ce4921882",
         "pin": "0x3e5b9b24b76931587002fcab77f5da5d328847c1c726942ebf3dbc47bda765f2",
         "build": "0x3e5b9b24b76931587002fcab77f5da5d328847c1c726942ebf3dbc47bda765f2",
         "live": "0x3e5b9b24b76931587002fcab77f5da5d328847c1c726942ebf3dbc47bda765f2",
@@ -74,5 +74,5 @@
       }
     ]
   },
-  "snappedAt": "2026-09-01T13:58:43.203Z"
+  "snappedAt": "2026-09-01T15:29:41.083Z"
 }

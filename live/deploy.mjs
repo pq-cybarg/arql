@@ -86,5 +86,14 @@ const record = {
   explorerToken: `${EXPLORER}/address/${qAddr}`,
   explorerTx: `${EXPLORER}/tx/${receipt.transactionHash}`,
 };
-fs.writeFileSync(path.join(root, "deployments/qrl-testnet.json"), JSON.stringify(record, null, 2));
+const metaPath = path.join(root, "deployments/qrl-testnet.json");
+let prev = {};
+try {
+  prev = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+} catch {
+  prev = {};
+}
+if (prev.usdcQ && prev.usdcQ !== qAddr) prev.previousUsdcQ = prev.usdcQ;
+Object.assign(prev, record);
+fs.writeFileSync(metaPath, JSON.stringify(prev, null, 2) + "\n");
 console.log(JSON.stringify(record, null, 2));
