@@ -56,6 +56,13 @@ export function zondNonceHex(agg) {
   return "0x" + Number(n).toString(16);
 }
 
+export function shortAddr(addr) {
+  const q = canonQ(addr);
+  if (!q) return "";
+  if (q.length <= 12) return q;
+  return q.slice(0, 6) + "..." + q.slice(-4);
+}
+
 export function userUsdcDisplay(tokensResp, usdcQ, decimals = 6) {
   const tok = findTokenBalance(tokensResp, usdcQ);
   if (!tok) return "0";

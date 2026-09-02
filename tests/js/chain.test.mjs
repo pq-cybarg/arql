@@ -7,6 +7,7 @@ import {
   inventoryFromZond,
   zondNonceHex,
   userUsdcDisplay,
+  shortAddr,
 } from "../../apps/web/chain.js";
 
 test("canonQ normalizes 0x and Q addresses", () => {
@@ -61,6 +62,11 @@ test("inventoryFromZond uses faucet remaining for the user-facing pool", () => {
 test("zondNonceHex reads aggregate nonce", () => {
   assert.equal(zondNonceHex({ address: { nonce: 14 } }), "0xe");
   assert.equal(zondNonceHex({ nonce: 0 }), "0x0");
+});
+
+test("shortAddr keeps Q prefix and clips the middle", () => {
+  assert.equal(shortAddr("Qadf94bb6e061a9f3b1d54826241eba701d43fb86"), "Qadf94...fb86");
+  assert.equal(shortAddr(""), "");
 });
 
 test("userUsdcDisplay is 0 when the live token is missing from the list", () => {

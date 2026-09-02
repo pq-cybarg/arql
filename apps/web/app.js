@@ -7,7 +7,7 @@ import {
   shouldSkipLiveApi,
   walletRpcUrl,
 } from "./wallets.js";
-import { loadLiveInventory, userUsdcDisplay, zondNonceHex } from "./chain.js";
+import { loadLiveInventory, userUsdcDisplay, zondNonceHex, shortAddr } from "./chain.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -96,10 +96,11 @@ function paint(s) {
   }
   if ($("sanc-out") && guest) $("sanc-out").textContent = "Flag and clear are operator-only. Anyone can Check.";
   paintReports(s);
-  if ($("faucet-status")) {
+  const fs = $("faucet-status");
+  if (fs && fs.dataset.busy !== "1") {
     const f = s.faucetQ || cfg.faucetQ;
-    $("faucet-status").textContent = f
-      ? `On-chain drip ${f} · 2 USDC / address / UTC day · 9 USDC / day total · wallet signature only`
+    fs.textContent = f
+      ? "2 USDC per address per UTC day. You pay gas in QRL. The drip contract signs nothing."
       : "On-chain faucet address missing from config";
   }
 }
@@ -150,13 +151,51 @@ function fmtUnits(hex, decimals) {
 
 function paintUser(u) {
   if (!$("user-usdc")) return;
+  const copy = $("copy-account");
   if (!u) {
     $("user-usdc").textContent = "—";
     $("user-qrl").textContent = "Connect the QRL wallet to see your USDC and QRL.";
+    if (copy) copy.hidden = true;
+    syncActions();
     return;
   }
   $("user-usdc").textContent = `${u.usdc} USDC`;
-  $("user-qrl").textContent = `${u.qrl} QRL · ${u.account}`;
+  const q = Number(u.qrl);
+  const gasNote = Number.isFinite(q) && q === 0
+    ? " You need a little QRL for gas — claim at zondscan.com/faucet first."
+    : "";
+  $("user-qrl").textContent = `${u.qrl} QRL · ${shortAddr(u.account)}${gasNote}`;
+  if (copy) {
+    copy.hidden = false;
+    copy.dataset.addr = toQ(u.account);
+  }
+  syncActions();
+}
+
+function usdcOnPage() {
+  const t = ($("user-usdc")?.textContent || "0").replace(/[^\d.]/g, "");
+  const n = parseFloat(t);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function syncActions() {
+  const on = !!qrlAccount;
+  const has = usdcOnPage() > 0;
+  for (const id of ["faucet-qrl", "add-token", "report-send"]) {
+    if ($(id)) $(id).disabled = !on;
+  }
+  document.querySelectorAll('form[data-action="transfer"] button, form[data-action="depositForBurn"] button').forEach((b) => {
+    b.disabled = !on || !has;
+  });
+  const sendHint = $("send-hint");
+  if (sendHint) sendHint.textContent = !on ? "Connect QRL first." : has ? "Sends QRC-20 USDC on QRL." : "Drip USDC first.";
+  const brHint = $("bridge-hint");
+  if (brHint) brHint.textContent = !on ? "Connect QRL first." : has ? "Wallet will ask: allow this amount, then send." : "Drip USDC first.";
+}
+
+function say(msg) {
+  const el = $("human-status");
+  if (el) el.textContent = msg;
 }
 
 async function zondSoft(path) {
@@ -445,6 +484,7 @@ for (const form of document.querySelectorAll("form[data-action]")) {
     e.preventDefault();
     const action = form.dataset.action;
     const fields = formData(form);
+    say(action === "depositForBurn" ? "Approve the amount, then confirm the bridge in the wallet." : "Confirm in the QRL wallet.");
     tape({ status: "sending", action, ...fields });
     const btn = form.querySelector("button[type=submit]");
     btn.disabled = true;
@@ -455,19 +495,29 @@ for (const form of document.querySelectorAll("form[data-action]")) {
       else if (!staticMode) out = await apiQrl(action, fields);
       else throw new Error("Connect the QRL 2.0 wallet to send this transaction");
       tape(out);
-      if (out.error) $("live-badge").textContent = "tx error";
-      else {
+      if (out.error) {
+        $("live-badge").textContent = "tx error";
+        say(out.error);
+      } else {
         $("live-badge").textContent = "tx sent";
         if (out.tx) {
-          const a = document.createElement("div");
           tape({ ...out, explorer: zondTx(out.tx) });
+          say(`Sent. ${zondTx(out.tx)}`);
+        } else {
+          say("Sent. Wait one QRL block (~1 min) for the balance to move.");
         }
-        setTimeout(refresh, 8000);
+        setTimeout(() => {
+          refresh();
+          pollUser();
+        }, 8000);
       }
     } catch (err) {
-      tape(String(err.message || err));
+      const msg = err.message || String(err);
+      tape(msg);
+      say(msg);
     } finally {
       btn.disabled = false;
+      syncActions();
     }
   });
 }
@@ -500,22 +550,35 @@ async function claimFaucet(rail) {
     const faucet = cfg.faucetQ;
     if (!faucet) throw new Error("on-chain faucet not deployed");
     const before = $("user-usdc")?.textContent;
-    if (status) status.textContent = "Approve drip() in the QRL wallet…";
+    if (status) {
+      status.dataset.busy = "1";
+      status.textContent = "Approve drip in the QRL wallet…";
+    }
+    say("Approve drip in the QRL wallet.");
     const out = await walletSend(faucet, "0x9f678cca");
     tape({ drip: out, faucet, explorer: zondTx(out.tx) });
-    if (status) status.textContent = `Drip sent ${out.tx}. QRL blocks are ~1 min. Waiting for ZondScan…`;
+    say(`Drip sent. Waiting for a QRL block (~1 min).`);
+    if (status) status.textContent = `Drip sent. Waiting for ZondScan…`;
     for (let i = 0; i < 24; i++) {
       await sleep(5000);
       await pollUser();
       await refresh();
       const now = $("user-usdc")?.textContent;
       if (now && now !== before && !now.startsWith("—")) {
-        if (status) status.textContent = `Received. Your wallet now shows ${now}.`;
+        if (status) {
+          status.dataset.busy = "0";
+          status.textContent = `Received. This page now shows ${now}.`;
+        }
+        say(`Received ${now}.`);
         return;
       }
-      if (status) status.textContent = `Drip sent. Waiting for the next QRL block (${i + 1}/24)… ${zondTx(out.tx)}`;
+      if (status) status.textContent = `Waiting for the next QRL block (${i + 1}/24)…`;
     }
-    if (status) status.textContent = `Tx sent. If USDC is still 0, open ${zondTx(out.tx)} — the indexer lags a block.`;
+    if (status) {
+      status.dataset.busy = "0";
+      status.textContent = "Tx sent. If USDC is still 0, the explorer is a block behind.";
+    }
+    say(`Drip tx ${out.tx}`);
     return;
   }
   const circle = cfg.circleFaucet || "https://faucet.circle.com/";
@@ -528,7 +591,11 @@ async function claimFaucet(rail) {
   } catch (err) {
     const msg = err.message || String(err);
     tape({ error: msg });
-    if (status) status.textContent = msg;
+    say(msg);
+    if (status) {
+      status.dataset.busy = "0";
+      status.textContent = msg;
+    }
   }
 }
 
@@ -566,9 +633,11 @@ $("report-send")?.addEventListener("click", async () => {
     const data = calldata("0xcaf2cbc5", subject, asciiTag(note).replace(/^0x/, ""));
     const out = await walletSend(board, data, "0x" + fee.toString(16));
     tape(out);
+    say("Report sent. It does not flag the address.");
     setTimeout(refresh, 5000);
   } catch (err) {
     tape({ error: err.message || String(err) });
+    say(err.message || String(err));
   }
 });
 
@@ -596,13 +665,11 @@ $("add-token")?.addEventListener("click", async () => {
       symbol: "USDC",
       decimals: 6,
       image: cfg.tokenImage,
-      hint: "This is a new contract, not a logo on the old one. Hide Q34ab8332… if it is still listed, then Add USDC again so the wallet stores https://pq-cybarg.github.io/arql/usdc.png.",
     });
+    say("USDC offered to the wallet. If the icon is wrong, hide the old row and click Add USDC again.");
   } catch (err) {
-    tape({
-      error: err.message || String(err),
-      hint: "Import Qadf94bb6e061a9f3b1d54826241eba701d43fb86 (not Q34ab8332…). Hide the old row first; wallets keep the first icon they stored.",
-    });
+    tape({ error: err.message || String(err) });
+    say(err.message || String(err));
   }
 });
 
@@ -622,6 +689,7 @@ $("qrl-connect").addEventListener("click", async () => {
     nextNonce = null;
     $("qrl-account").textContent = toQ(qrlAccount) || "connected";
     tape({ connected: toQ(qrlAccount) });
+    say(`QRL connected ${shortAddr(qrlAccount)}`);
     pollUser();
     ensureQrlHttpsRpc().catch(() => {});
   } catch (err) {
@@ -630,6 +698,7 @@ $("qrl-connect").addEventListener("click", async () => {
     $("qrl-account").textContent = stale
       ? "Wallet extension was reloaded. Refresh this tab, then Connect again."
       : msg;
+    say(stale ? "Refresh this tab, then Connect again." : msg);
     tape({
       error: msg,
       hint: stale
@@ -682,11 +751,34 @@ $("arc-connect").addEventListener("click", async () => {
     }
     const acc = await p.request({ method: "eth_requestAccounts" });
     $("arc-account").textContent = `${d.info.name}: ${acc[0] || "connected"}`;
+    const recv = document.querySelector('form[data-action="depositForBurn"] input[name="mintRecipient"]');
+    if (recv && acc[0] && !recv.value) recv.value = acc[0];
     tape({ arcWallet: d.info.name, rdns: d.info.rdns, account: acc[0] });
+    say(`Arc connected: ${d.info.name}`);
   } catch (err) {
     $("arc-account").textContent = err.message || String(err);
   }
 });
+
+$("copy-account")?.addEventListener("click", async () => {
+  const addr = $("copy-account").dataset.addr;
+  if (!addr) return;
+  try {
+    await navigator.clipboard.writeText(addr);
+    say(`Copied ${shortAddr(addr)}`);
+  } catch {
+    say(addr);
+  }
+});
+
+function fillAmount(formSel) {
+  const form = document.querySelector(formSel);
+  const input = form?.querySelector('input[name="amount"]');
+  if (input) input.value = String(usdcOnPage());
+}
+
+$("send-max")?.addEventListener("click", () => fillAmount('form[data-action="transfer"]'));
+$("bridge-max")?.addEventListener("click", () => fillAmount('form[data-action="depositForBurn"]'));
 
 watchEip6963();
 cfg = await loadConfig().catch(() => ({}));
@@ -695,5 +787,6 @@ setTimeout(() => {
 }, 400);
 await refresh();
 pollUser();
+syncActions();
 setInterval(refresh, 12000);
 setInterval(pollUser, 5000);

@@ -246,6 +246,35 @@ body.static-pages .board article:has(#sanc-check) { display: none; }
 .install { color: var(--mute); font-size: 12px; padding-left: 18px; margin: 0 0 14px; }
 .install li { margin: 6px 0; }
 #qrl-connect { width: 100%; margin-bottom: 8px; }
+.human-status {
+  margin: 20px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  color: var(--paper);
+  background: rgba(196, 154, 74, 0.08);
+}
+.ghost-mini {
+  width: auto !important;
+  margin: 0 0 8px !important;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+}
+button.primary {
+  background: var(--paper);
+  color: var(--void);
+  border: 0;
+}
+details.quiet {
+  margin-top: 12px;
+  color: var(--mute);
+  font-size: 12px;
+}
+details.quiet summary { cursor: pointer; color: var(--qrl); font-family: inherit; font-size: 12px; }
+details.quiet .vm { margin: 8px 0; font-size: 12px; }
 
 @media (max-width: 980px) {
   .disclose-grid, .steps, .balances { grid-template-columns: 1fr; }
@@ -280,6 +309,12 @@ button {
   cursor: pointer;
 }
 button[type="button"] { background: transparent; color: var(--paper); border: 1px solid var(--line); }
+button.primary,
+button[type="button"].primary {
+  background: var(--paper);
+  color: var(--void);
+  border: 0;
+}
 .calldata { margin-top: 16px; font-size: 11px; color: var(--arc); white-space: pre-wrap; word-break: break-all; }
 .log ol { padding-left: 18px; }
 .log li { margin: 10px 0; }

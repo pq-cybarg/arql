@@ -22,15 +22,17 @@
       <div class="mark">ARQL</div>
       <span class="live" id="live-badge">testnet</span>
     </div>
-    <p class="lede">This site drips 2 test USDC on QRL from a public contract. Connect the QRL 2.0 wallet and approve one transaction. No operator desk.</p>
+    <p class="lede">Connect the official QRL 2.0 wallet, drip 2 test USDC, then send or bridge. This public page holds no keys.</p>
   </header>
 
   <main>
+    <p id="human-status" class="human-status" role="status">Connect the QRL wallet to start.</p>
     <section class="balances">
       <article class="hero-q">
         <p class="kicker">Your wallet</p>
         <p class="big" id="user-usdc">—</p>
         <p class="sub" id="user-qrl">Connect the QRL wallet to see your USDC and QRL.</p>
+        <button type="button" id="copy-account" class="ghost-mini" hidden>Copy address</button>
       </article>
       <article class="hero-q pool">
         <p class="kicker">Faucet remaining</p>
@@ -41,48 +43,59 @@
 
     <ol class="steps">
       <li class="panel">
-        <h2>1. Connect</h2>
-        <p class="vm">Use the official QRL 2.0 Web3 Wallet. Arc (MetaMask) is only for Arc Testnet.</p>
-        <button type="button" id="qrl-connect">Connect QRL wallet</button>
+        <h2>1. Connect QRL</h2>
+        <p class="vm">Install the <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">QRL 2.0 Web3 Wallet</a>, unlock it, then connect. You also need a little QRL for gas (<a href="https://zondscan.com/faucet" target="_blank" rel="noreferrer">ZondScan faucet</a>).</p>
+        <button type="button" id="qrl-connect" class="primary">Connect QRL wallet</button>
         <p id="qrl-account" class="hint">Not connected</p>
-        <label>Arc extension
-          <select id="arc-wallet-pick">
-            <option value="">Detected wallets appear here</option>
-          </select>
-        </label>
-        <button type="button" id="arc-refresh">Refresh wallet list</button>
-        <button type="button" id="arc-connect">Connect selected Arc wallet</button>
-        <p id="arc-account" class="hint">Not connected</p>
-        <p class="hint warn-rpc">Arc: pick the extension, then Connect. Refresh if a wallet is missing (some only announce when asked). QRL Wallet may log Failed to fetch on GitHub Pages because the official Testnet RPC allows qrlwallet.com, localhost:5173, and chrome-extension pages, not this site. Connect still works. Balances load from ZondScan. MetaMask MaxListeners / ObjectMultiplex lines are the extension, not this page.</p>
+        <details class="quiet">
+          <summary>Arc wallet (only if you will use Arc Testnet)</summary>
+          <p class="vm">Pick the extension that should talk to Arc, then connect. Do not use window.ethereum; last injector wins.</p>
+          <label>Arc extension
+            <select id="arc-wallet-pick">
+              <option value="">Detected wallets appear here</option>
+            </select>
+          </label>
+          <button type="button" id="arc-refresh">Refresh wallet list</button>
+          <button type="button" id="arc-connect">Connect selected Arc wallet</button>
+          <p id="arc-account" class="hint">Not connected</p>
+        </details>
       </li>
       <li class="panel">
         <h2>2. Get test USDC on QRL</h2>
-        <p class="vm">On-chain <code>drip()</code> to your connected address. 2 USDC per address per UTC day, 9 USDC total per day. You only sign in the wallet. Arc Testnet USDC is separate (Circle’s site, 20 USDC / 2 hours).</p>
-        <button type="button" id="faucet-qrl">Drip 2 USDC (on-chain)</button>
-        <button type="button" id="add-token">Add USDC to QRL wallet</button>
+        <p class="vm">One signature. 2 USDC per address per UTC day, 9 USDC total per day. Arc USDC is a different faucet (Circle).</p>
+        <button type="button" id="faucet-qrl" class="primary" disabled>Drip 2 USDC</button>
+        <button type="button" id="add-token" disabled>Add USDC to QRL wallet</button>
         <button type="button" id="faucet-arc">Open Circle Arc faucet</button>
-        <p id="faucet-status" class="hint">On-chain drip · 2 USDC / address / day · gas only</p>
+        <p id="faucet-status" class="hint">Connect QRL, then drip. Wait about one minute for the next block.</p>
         <p class="hint token-meta">
           <img id="token-icon" src="./usdc.png" alt="USDC" width="32" height="32" />
-          Live token (new contract): <code id="token-q">Qadf94bb6e061a9f3b1d54826241eba701d43fb86</code>
-          · USD Coin · USDC · 6 decimals. The icon is not on-chain. If the wallet still shows a generic coin, you imported this address before the PNG was passed in, or you still have the old contract <code>Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9</code>. Hide that row, then Add USDC again.
+          <span>USD Coin · USDC · 6 decimals · <code id="token-q">Qadf94bb6e061a9f3b1d54826241eba701d43fb86</code></span>
         </p>
+        <details class="quiet">
+          <summary>Wrong icon in the wallet?</summary>
+          <p class="vm">The PNG is not on-chain. Hide any row for <code>Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9</code>, then Add USDC again for the live contract above.</p>
+        </details>
       </li>
       <li class="panel">
         <h2>3. Send on QRL</h2>
+        <p class="vm" id="send-hint">Connect QRL first.</p>
         <form data-action="transfer">
           <label>To <input name="to" placeholder="Q…" required /></label>
-          <label>Amount <input name="amount" value="1" inputmode="decimal" /></label>
+          <label>Amount
+            <input name="amount" value="1" inputmode="decimal" />
+          </label>
+          <button type="button" id="send-max" class="ghost-mini">Use my USDC</button>
           <button type="submit">Send USDC</button>
         </form>
       </li>
       <li class="panel">
         <h2>4. Bridge to Arc</h2>
-        <p class="vm">Burns QRL USDC so native Circle USDC can be unlocked on Arc. One amount. The wallet will ask you to allow that amount, then to send it. That is the only burn on this rail.</p>
+        <p class="vm" id="bridge-hint">Connect QRL first.</p>
         <form data-action="depositForBurn">
           <label>Arc recipient <input name="mintRecipient" placeholder="0x… on Arc" required /></label>
           <label>Amount <input name="amount" value="1" inputmode="decimal" /></label>
           <input type="hidden" name="destinationDomain" value="26" />
+          <button type="button" id="bridge-max" class="ghost-mini">Use my USDC</button>
           <button type="submit">Bridge to Arc</button>
         </form>
       </li>
@@ -192,11 +205,11 @@
 
     <section class="tape-wrap">
       <div class="tape">
-        <div class="tape-label">status</div>
+        <div class="tape-label">technical log</div>
         <pre id="tape-body">ready</pre>
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=ux23"></script>
+  <script type="module" src="./app.js?v=ux24"></script>
 </body>
 </html>
