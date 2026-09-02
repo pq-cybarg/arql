@@ -6,6 +6,7 @@ import {
   pickQrlProvider as pickQrlFrom,
   shouldSkipLiveApi,
   walletRpcUrl,
+  detectedWalletLabel,
 } from "./wallets.js";
 import { loadLiveInventory, userUsdcDisplay, zondNonceHex, shortAddr, hexQty } from "./chain.js";
 
@@ -206,6 +207,49 @@ async function zondSoft(path) {
   } catch {
     return {};
   }
+}
+
+function setQrlAccount(acc) {
+  qrlAccount = Array.isArray(acc) ? acc[0] || "" : acc || "";
+  nextNonce = null;
+  if (qrlAccount) sessionStorage.setItem("qrlAccount", qrlAccount);
+  else sessionStorage.removeItem("qrlAccount");
+  if ($("qrl-account")) {
+    $("qrl-account").textContent = qrlAccount ? toQ(qrlAccount) : "Not connected";
+  }
+  syncActions();
+}
+
+function showWalletHint() {
+  if (qrlAccount) return;
+  const el = $("qrl-account");
+  if (!el) return;
+  const msg = detectedWalletLabel(!!currentQrlProvider(), false);
+  el.textContent = msg;
+}
+
+async function silentQrlConnect() {
+  qrlProvider = currentQrlProvider();
+  if (!qrlProvider) {
+    showWalletHint();
+    return "";
+  }
+  try {
+    const acc = await qrlProvider.request({ method: "qrl_accounts" }).catch(() =>
+      qrlProvider.request({ method: "eth_accounts" }),
+    );
+    const a = Array.isArray(acc) ? acc[0] : acc;
+    if (a) {
+      setQrlAccount(a);
+      say(`QRL connected ${shortAddr(a)}`);
+      await pollUser();
+      return a;
+    }
+  } catch {
+    /* locked or not yet authorized */
+  }
+  showWalletHint();
+  return "";
 }
 
 async function pollUser() {
@@ -537,10 +581,12 @@ async function ensureQrlConnected() {
   if (qrlAccount && qrlProvider) return qrlAccount;
   qrlProvider = currentQrlProvider();
   if (!qrlProvider) throw new Error("Install and unlock the official QRL 2.0 wallet, then retry");
+  say("Approve connect in the QRL wallet.");
   const acc = await qrlRequest("qrl_requestAccounts");
-  qrlAccount = Array.isArray(acc) ? acc[0] : acc;
-  nextNonce = null;
-  if ($("qrl-account")) $("qrl-account").textContent = toQ(qrlAccount) || "connected";
+  const a = Array.isArray(acc) ? acc[0] : acc;
+  if (!a) throw new Error("No account returned. Unlock the QRL wallet and click Connect.");
+  setQrlAccount(a);
+  pollUser();
   return qrlAccount;
 }
 
@@ -687,10 +733,11 @@ $("qrl-connect").addEventListener("click", async () => {
         'No QRL 2.0 wallet found. Install the official <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">QRL Web3 Wallet</a>, then reload this page.';
       return;
     }
+    say("Approve connect in the QRL wallet.");
     const acc = await qrlRequest("qrl_requestAccounts");
-    qrlAccount = Array.isArray(acc) ? acc[0] : acc;
-    nextNonce = null;
-    $("qrl-account").textContent = toQ(qrlAccount) || "connected";
+    const a = Array.isArray(acc) ? acc[0] : acc;
+    if (!a) throw new Error("No account returned. Unlock the QRL wallet and click Connect.");
+    setQrlAccount(a);
     tape({ connected: toQ(qrlAccount) });
     say(`QRL connected ${shortAddr(qrlAccount)}`);
     pollUser();
@@ -785,11 +832,8 @@ $("bridge-max")?.addEventListener("click", () => fillAmount('form[data-action="d
 
 watchEip6963();
 cfg = await loadConfig().catch(() => ({}));
-setTimeout(() => {
-  if (currentQrlProvider()) $("qrl-account").textContent = "QRL 2.0 wallet detected — click Connect";
-}, 400);
 await refresh();
-pollUser();
 syncActions();
+await silentQrlConnect();
 setInterval(refresh, 12000);
 setInterval(pollUser, 5000);

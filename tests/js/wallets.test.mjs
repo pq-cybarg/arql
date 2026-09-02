@@ -10,6 +10,7 @@ import {
   findWallet,
   REQUEST_PROVIDER,
   ANNOUNCE_PROVIDER,
+  detectedWalletLabel,
 } from "../../apps/web/wallets.js";
 
 test("QRL and Zond announcements are not Arc wallets", () => {
@@ -83,6 +84,12 @@ test("findWallet looks up synthetic injected uuid outside the announce map", () 
   const wallets = collectEvmWallets(new Map(), extra);
   const hit = findWallet(wallets, new Map(), "injected-ethereum");
   assert.equal(hit.provider, extra);
+});
+
+test("detectedWalletLabel does not overwrite a connected account", () => {
+  assert.equal(detectedWalletLabel(true, true), "");
+  assert.match(detectedWalletLabel(true, false), /Click Connect/);
+  assert.equal(detectedWalletLabel(false, false), "Not connected");
 });
 
 test("EIP-6963 request/announce event names match the spec", () => {

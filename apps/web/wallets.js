@@ -61,6 +61,12 @@ export function pickQrlProvider(announced, globals = {}) {
   return null;
 }
 
+export function detectedWalletLabel(hasProvider, connected) {
+  if (connected) return "";
+  if (hasProvider) return "QRL 2.0 wallet found. Click Connect.";
+  return "Not connected";
+}
+
 export function shouldSkipLiveApi(hostname) {
   return /github\.io$/i.test(String(hostname || ""));
 }

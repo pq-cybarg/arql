@@ -9,7 +9,9 @@ const server = readFileSync(new URL("../../scripts/web-server.mjs", import.meta.
 test("Pages desk asks wallets to re-announce and does not hit /api/state on github.io", () => {
   assert.match(html, /rel="icon" href="\.\/usdc\.png"/);
   assert.match(html, /id="arc-refresh"/);
-  assert.match(html, /app\.js\?v=ux25/);
+  assert.match(html, /app\.js\?v=ux26/);
+  assert.match(app, /silentQrlConnect/);
+  assert.match(app, /detectedWalletLabel/);
   assert.match(html, /id="human-status"/);
   assert.match(html, /Use my USDC/);
   assert.match(html, /Q34ab8332f1f46cd6bf42118b6ed8c5208d6c9af9/);
