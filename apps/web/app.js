@@ -7,7 +7,7 @@ import {
   shouldSkipLiveApi,
   walletRpcUrl,
 } from "./wallets.js";
-import { loadLiveInventory, userUsdcDisplay, zondNonceHex, shortAddr } from "./chain.js";
+import { loadLiveInventory, userUsdcDisplay, zondNonceHex, shortAddr, hexQty } from "./chain.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -364,15 +364,18 @@ async function walletSend(to, data, value = "0x0") {
     const agg = await zondSoft(`/address/aggregate/${toQ(from)}`);
     nextNonce = Number(BigInt(zondNonceHex(agg)));
   }
+  const fee = hexQty("0x9502f907");
   const tx = {
     from,
     to: toQ(to),
     data,
-    value,
-    gas: "0x40000",
-    gasPrice: "0x9502f907",
-    nonce: "0x" + nextNonce.toString(16),
-    chainId: "0x" + Number(cfg.chainId || 1337).toString(16),
+    value: hexQty(value),
+    gas: hexQty("0x40000"),
+    maxFeePerGas: fee,
+    maxPriorityFeePerGas: hexQty("0x3b9aca07"),
+    nonce: hexQty(nextNonce),
+    chainId: hexQty(cfg.chainId || 1337),
+    type: "0x2",
   };
   let hash;
   try {

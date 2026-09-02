@@ -8,6 +8,7 @@ import {
   zondNonceHex,
   userUsdcDisplay,
   shortAddr,
+  hexQty,
 } from "../../apps/web/chain.js";
 
 test("canonQ normalizes 0x and Q addresses", () => {
@@ -59,9 +60,16 @@ test("inventoryFromZond uses faucet remaining for the user-facing pool", () => {
   assert.equal(inv.qrl, 9.97);
 });
 
+test("hexQty is even-length 0x for QRL web3 validators", () => {
+  assert.equal(hexQty(0), "0x00");
+  assert.equal(hexQty(14), "0x0e");
+  assert.equal(hexQty("0x40000"), "0x040000");
+  assert.equal(hexQty(1337), "0x0539");
+});
+
 test("zondNonceHex reads aggregate nonce", () => {
-  assert.equal(zondNonceHex({ address: { nonce: 14 } }), "0xe");
-  assert.equal(zondNonceHex({ nonce: 0 }), "0x0");
+  assert.equal(zondNonceHex({ address: { nonce: 14 } }), "0x0e");
+  assert.equal(zondNonceHex({ nonce: 0 }), "0x00");
 });
 
 test("shortAddr keeps Q prefix and clips the middle", () => {

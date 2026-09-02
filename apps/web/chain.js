@@ -51,9 +51,18 @@ async function zondJson(path) {
   return JSON.parse(text);
 }
 
+export function hexQty(n) {
+  let v = n;
+  if (typeof v === "string") v = v.trim() === "" ? 0n : BigInt(v);
+  else v = BigInt(v);
+  let h = v.toString(16);
+  if (h.length % 2) h = "0" + h;
+  return "0x" + h;
+}
+
 export function zondNonceHex(agg) {
   const n = agg?.address?.nonce ?? agg?.nonce ?? 0;
-  return "0x" + Number(n).toString(16);
+  return hexQty(n);
 }
 
 export function shortAddr(addr) {
