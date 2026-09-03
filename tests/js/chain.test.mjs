@@ -9,6 +9,11 @@ import {
   userUsdcDisplay,
   shortAddr,
   hexQty,
+  escHtml,
+  isQrl20Addr,
+  isArc20Addr,
+  word64,
+  parseAmount,
 } from "../../apps/web/chain.js";
 
 test("canonQ normalizes 0x and Q addresses", () => {
@@ -58,6 +63,32 @@ test("inventoryFromZond uses faucet remaining for the user-facing pool", () => {
   assert.equal(inv.pool, "100");
   assert.equal(inv.block, 221426);
   assert.equal(inv.qrl, 9.97);
+});
+
+test("escHtml escapes markup from wallets and reports", () => {
+  assert.equal(escHtml(`<img src=x onerror="alert(1)">`), "&lt;img src=x onerror=&quot;alert(1)&quot;&gt;");
+});
+
+test("QRL and Arc address checks are 20-byte only", () => {
+  assert.equal(isQrl20Addr("Qadf94bb6e061a9f3b1d54826241eba701d43fb86"), true);
+  assert.equal(isQrl20Addr("0xadf94bb6e061a9f3b1d54826241eba701d43fb86"), false);
+  assert.equal(isArc20Addr("0x3600000000000000000000000000000000000000"), true);
+  assert.equal(isArc20Addr("Q3600000000000000000000000000000000000000"), false);
+});
+
+test("word64 rejects non-hex and oversize values", () => {
+  assert.equal(word64("Q00a11ce"), "0".repeat(57) + "00a11ce");
+  assert.equal(word64(1n), "0".repeat(63) + "1");
+  assert.throws(() => word64("xyz"), /not hex/);
+  assert.throws(() => word64("aa".repeat(33)), /too wide/);
+});
+
+test("parseAmount rejects junk and negative strings", () => {
+  assert.equal(parseAmount("2"), 2000000n);
+  assert.equal(parseAmount("1.5"), 1500000n);
+  assert.throws(() => parseAmount("-1"), /invalid amount/);
+  assert.throws(() => parseAmount("1e6"), /invalid amount/);
+  assert.throws(() => parseAmount("1.1234567"), /too many decimals/);
 });
 
 test("hexQty is even-length 0x for QRL web3 validators", () => {

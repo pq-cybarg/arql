@@ -1,3 +1,42 @@
+export function escHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[c]);
+}
+
+export function isQrl20Addr(addr) {
+  return /^Q[0-9a-f]{40}$/i.test(String(addr || "").trim());
+}
+
+export function isArc20Addr(addr) {
+  return /^0x[0-9a-f]{40}$/i.test(String(addr || "").trim());
+}
+
+export function word64(value) {
+  if (typeof value === "bigint") {
+    if (value < 0n) throw new Error("negative word");
+    return value.toString(16).padStart(64, "0");
+  }
+  const s = String(value ?? "").trim();
+  const h = s.replace(/^0x/i, "").replace(/^Q/i, "");
+  if (!/^[0-9a-f]*$/i.test(h)) throw new Error("not hex");
+  if (h.length > 64) throw new Error("too wide");
+  return h.toLowerCase().padStart(64, "0");
+}
+
+export function parseAmount(amount, decimals = 6) {
+  const s = String(amount ?? "").trim();
+  if (!/^\d+(\.\d+)?$/.test(s)) throw new Error("invalid amount");
+  const [w, f = ""] = s.split(".");
+  if (f.length > decimals) throw new Error("too many decimals");
+  const frac = (f + "0".repeat(decimals)).slice(0, decimals);
+  return BigInt(w) * 10n ** BigInt(decimals) + BigInt(frac || "0");
+}
+
 export function canonQ(addr) {
   const s = String(addr || "").trim();
   if (!s) return "";

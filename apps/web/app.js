@@ -8,7 +8,18 @@ import {
   walletRpcUrl,
   detectedWalletLabel,
 } from "./wallets.js";
-import { loadLiveInventory, userUsdcDisplay, zondNonceHex, shortAddr, hexQty } from "./chain.js";
+import {
+  loadLiveInventory,
+  userUsdcDisplay,
+  zondNonceHex,
+  shortAddr,
+  hexQty,
+  escHtml,
+  isQrl20Addr,
+  isArc20Addr,
+  word64,
+  parseAmount,
+} from "./chain.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -132,7 +143,7 @@ function paintCodeWatch(s) {
             unpinned: "no pin and no build artifact",
             "rpc-failed": "could not read chain",
           }[a.reason] || a.reason;
-        return `<li><strong>${a.name}</strong> ${a.address || ""} — ${why}<br>pin ${a.pin || "—"}<br>build ${a.build || "—"}<br>live ${a.live || "—"}</li>`;
+        return `<li><strong>${escHtml(a.name)}</strong> ${escHtml(a.address || "")} — ${escHtml(why)}<br>pin ${escHtml(a.pin || "—")}<br>build ${escHtml(a.build || "—")}<br>live ${escHtml(a.live || "—")}</li>`;
       })
       .join("");
   }
@@ -306,18 +317,8 @@ function setStaticMode(on) {
   }
 }
 
-function pad64(hex) {
-  return hex.replace(/^0x/i, "").replace(/^Q/i, "").toLowerCase().padStart(64, "0");
-}
-
-function units(amount, decimals = 6) {
-  const [w, f = ""] = String(amount).trim().split(".");
-  const frac = (f + "0".repeat(decimals)).slice(0, decimals);
-  return BigInt(w || "0") * 10n ** BigInt(decimals) + BigInt(frac || "0");
-}
-
 function calldata(sel, ...words) {
-  return sel + words.map((w) => pad64(typeof w === "bigint" ? w.toString(16) : String(w))).join("");
+  return sel + words.map((w) => word64(w)).join("");
 }
 
 const eip6963 = new Map();
@@ -336,7 +337,12 @@ function renderArcPicker() {
   const wallets = evmWallets();
   const prev = sel.value || sessionStorage.getItem("arcWalletUuid") || "";
   sel.innerHTML = wallets.length
-    ? wallets.map((d) => `<option value="${d.info.uuid}">${d.info.name} (${d.info.rdns || "injected"})</option>`).join("")
+    ? wallets
+        .map(
+          (d) =>
+            `<option value="${escHtml(d.info.uuid)}">${escHtml(d.info.name)} (${escHtml(d.info.rdns || "injected")})</option>`,
+        )
+        .join("")
     : `<option value="">No Arc wallet yet — unlock and Refresh</option>`;
   if (prev && [...sel.options].some((o) => o.value === prev)) sel.value = prev;
 }
@@ -428,8 +434,13 @@ async function walletSend(to, data, value = "0x0") {
     try {
       hash = await qrlRequest("eth_sendTransaction", [tx]);
     } catch {
+      nextNonce = null;
       throw err;
     }
+  }
+  if (!hash || (typeof hash === "string" && !/^0x[0-9a-f]{64}$/i.test(hash))) {
+    nextNonce = null;
+    throw new Error("Wallet did not return a transaction hash");
   }
   nextNonce += 1;
   return { tx: hash, from: toQ(from), to: toQ(to) };
@@ -453,7 +464,7 @@ function paintReports(s) {
   box.innerHTML = items
     .map(
       (r) =>
-        `<li><span class="mute">#${r.id}</span> ${r.subject} <span class="mute">by ${r.reporter} · block ${r.atBlock} · ${r.paidQrl} QRL</span></li>`,
+        `<li><span class="mute">#${escHtml(r.id)}</span> ${escHtml(r.subject)} <span class="mute">by ${escHtml(r.reporter)} · block ${escHtml(r.atBlock)} · ${escHtml(r.paidQrl)} QRL</span></li>`,
     )
     .join("");
 }
@@ -461,13 +472,25 @@ function paintReports(s) {
 async function walletAction(action, fields, s) {
   const token = s.contract || cfg.usdcQ;
   const bridge = s.bridge || cfg.bridgeQ;
-  const amt = units(fields.amount || "0", s.decimals || 6);
-  if (action === "transfer") return walletSend(token, calldata("0xa9059cbb", fields.to, amt));
-  if (action === "approve") return walletSend(token, calldata("0x095ea7b3", fields.spender, amt));
+  const amt = parseAmount(fields.amount || "0", s.decimals || 6);
+  if (amt === 0n) throw new Error("amount must be greater than 0");
+  if (action === "transfer") {
+    const to = toQ(fields.to);
+    if (!isQrl20Addr(to)) throw new Error("Send to a Q-prefix 20-byte QRL address");
+    return walletSend(token, calldata("0xa9059cbb", to, amt));
+  }
+  if (action === "approve") {
+    const spender = toQ(fields.spender || bridge);
+    if (!isQrl20Addr(spender)) throw new Error("bad spender");
+    return walletSend(token, calldata("0x095ea7b3", spender, amt));
+  }
   if (action === "burn") return walletSend(token, calldata("0x42966c68", amt));
   if (action === "depositForBurn") {
+    const toArc = String(fields.mintRecipient || "").trim();
+    if (!isArc20Addr(toArc)) throw new Error("Arc recipient must be 0x plus 40 hex characters");
+    const domain = BigInt(cfg.arcDomain || 26);
     const allow = await walletSend(token, calldata("0x095ea7b3", bridge, amt));
-    const burn = await walletSend(bridge, calldata("0x01a8a164", amt, BigInt(fields.destinationDomain || 26), fields.mintRecipient));
+    const burn = await walletSend(bridge, calldata("0x01a8a164", amt, domain, toArc));
     return { allow, ...burn };
   }
   throw new Error(`${action} is operator-only`);
@@ -590,11 +613,15 @@ async function ensureQrlConnected() {
   return qrlAccount;
 }
 
+let faucetBusy = false;
 async function claimFaucet(rail) {
   const status = $("faucet-status");
+  if (rail === "qrl" && faucetBusy) return;
   try {
   if (!cfg.faucetQ) cfg = await loadConfig().catch(() => cfg);
   if (rail === "qrl") {
+    faucetBusy = true;
+    if ($("faucet-qrl")) $("faucet-qrl").disabled = true;
     await ensureQrlConnected();
     const faucet = cfg.faucetQ;
     if (!faucet) throw new Error("on-chain faucet not deployed");
@@ -630,7 +657,13 @@ async function claimFaucet(rail) {
     say(`Drip tx ${out.tx}`);
     return;
   }
-  const circle = cfg.circleFaucet || "https://faucet.circle.com/";
+  let circle = "https://faucet.circle.com/";
+  try {
+    const u = new URL(cfg.circleFaucet || circle);
+    if (u.protocol === "https:") circle = u.href;
+  } catch {
+    /* keep default */
+  }
   window.open(circle, "_blank", "noopener,noreferrer");
   tape({
     rail: "arc",
@@ -644,6 +677,11 @@ async function claimFaucet(rail) {
     if (status) {
       status.dataset.busy = "0";
       status.textContent = msg;
+    }
+  } finally {
+    if (rail === "qrl") {
+      faucetBusy = false;
+      syncActions();
     }
   }
 }
@@ -676,7 +714,8 @@ $("report-send")?.addEventListener("click", async () => {
   try {
     const board = cfg.reportBoardQ || (await refresh()).reportBoard;
     if (!board) throw new Error("report board not deployed");
-    const subject = $("report-subject")?.value;
+    const subject = toQ($("report-subject")?.value);
+    if (!isQrl20Addr(subject)) throw new Error("Report a Q-prefix 20-byte address");
     const note = $("report-note")?.value;
     const fee = BigInt(cfg.reportMinFee || "10000000000000000");
     const data = calldata("0xcaf2cbc5", subject, asciiTag(note).replace(/^0x/, ""));
@@ -703,7 +742,7 @@ $("add-token")?.addEventListener("click", async () => {
             address: toQ(cfg.usdcQ),
             symbol: "USDC",
             decimals: 6,
-            image: cfg.tokenImage || new URL("./usdc.png", location.href).href,
+            image: new URL("./usdc.png", location.href).href,
           },
         },
       ],
@@ -729,8 +768,8 @@ $("qrl-connect").addEventListener("click", async () => {
   try {
     qrlProvider = currentQrlProvider();
     if (!qrlProvider) {
-      $("qrl-account").innerHTML =
-        'No QRL 2.0 wallet found. Install the official <a href="https://github.com/theQRL/qrl-web3-wallet/releases/latest" target="_blank" rel="noreferrer">QRL Web3 Wallet</a>, then reload this page.';
+      $("qrl-account").textContent =
+        "No QRL 2.0 wallet found. Install from the link above, then reload this page.";
       return;
     }
     say("Approve connect in the QRL wallet.");

@@ -52,8 +52,10 @@ test("injected QRL window.ethereum is not added to the Arc list", () => {
 
 test("pickQrlProvider prefers announced QRL then window.qrl", () => {
   const qrl = { isQrlWallet: true };
+  const fake = { isQrlWallet: true };
   const announced = new Map([
     ["mm", { info: { uuid: "mm", name: "MetaMask", rdns: "io.metamask" }, provider: {} }],
+    ["fake", { info: { uuid: "fake", name: "QRL Wallet", rdns: "io.evil.qrl" }, provider: fake }],
     ["qrl", { info: { uuid: "qrl", name: "QRL Wallet", rdns: "io.theqrl.wallet" }, provider: qrl }],
   ]);
   assert.equal(pickQrlProvider(announced, {}), qrl);

@@ -52,9 +52,13 @@ export function collectEvmWallets(announced, injected) {
 }
 
 export function pickQrlProvider(announced, globals = {}) {
+  const qs = [];
   for (const d of announcedList(announced)) {
-    if (d?.provider && isQrlInfo(d.info, d.provider)) return d.provider;
+    if (d?.provider && isQrlInfo(d.info, d.provider)) qs.push(d);
   }
+  const official = qs.find((d) => /theqrl|qrlwallet/i.test(`${d.info?.rdns || ""} ${d.info?.name || ""}`));
+  if (official) return official.provider;
+  if (qs[0]) return qs[0].provider;
   if (globals.qrl) return globals.qrl;
   if (globals.zond) return globals.zond;
   if (globals.ethereum && isQrlInfo({}, globals.ethereum)) return globals.ethereum;

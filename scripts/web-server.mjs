@@ -291,4 +291,5 @@ const server = http.createServer(async (req, res) => {
   res.end(readFileSync(file));
 });
 
-server.listen(PORT, () => console.log(`ARQL desk http://127.0.0.1:${PORT}`));
+const HOST = process.env.WEB_HOST || "127.0.0.1";
+server.listen(PORT, HOST, () => console.log(`ARQL desk http://${HOST}:${PORT}`));
