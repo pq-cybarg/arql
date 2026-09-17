@@ -1,3 +1,4 @@
+<img width="122" height="128" alt="image" src="https://github.com/user-attachments/assets/74b23b40-c358-4fe8-8a9b-f448e80c192b" />
 # ARQL
 
 Bridge **native USDC on Circle’s Arc Testnet** onto **QRL 2.0** as a stablecoin,
