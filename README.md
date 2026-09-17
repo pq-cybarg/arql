@@ -1,5 +1,7 @@
 # ARQL
-<img alt="image" src="https://github.com/user-attachments/assets/74b23b40-c358-4fe8-8a9b-f448e80c192b" />
+<p align="center">
+    <img width="20%" alt="arqlline" src="https://github.com/user-attachments/assets/06d930cf-caa2-490f-a6b4-8f695703200e" />
+</p>
 
 Bridge **native USDC on Circle’s Arc Testnet** onto **QRL 2.0** as a stablecoin,
 without leaving this folder and without violating Arc’s CCTP rules.
