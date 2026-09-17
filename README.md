@@ -1,6 +1,6 @@
 # ARQL
 <p align="center">
-    <img width="20%" alt="arqlline" src="https://github.com/user-attachments/assets/06d930cf-caa2-490f-a6b4-8f695703200e" />
+    <img width="20%" height="auto" alt="arqlbox" src="https://github.com/user-attachments/assets/b43a948e-1cbd-4b64-aba8-2582873e27fb" />
 </p>
 
 Bridge **native USDC on Circle’s Arc Testnet** onto **QRL 2.0** as a stablecoin,
